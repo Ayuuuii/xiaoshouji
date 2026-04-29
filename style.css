@@ -1,0 +1,5109 @@
+/* ============================================================ */
+        /* 【1. 全局基础样式】*/
+        /* ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+
+        body {
+			background-color: #f5f5f5;
+			width: 100vw;
+			height: 100%;
+			height: 100%; /* 确保高度填满 */
+			position: fixed; /* 强制固定，防止 iOS 整体拖动 */
+			overflow: hidden; /* 禁止 body 滚动 */
+			overscroll-behavior: none; /* 关键：禁止浏览器的橡皮筋效果和下拉刷新 */
+		}
+
+		html {
+			height: 100%;
+			overflow: hidden;
+			background-color: #f8f8f8;
+			overscroll-behavior: none;
+		}
+
+        .content-area {
+		position: fixed;
+		top: 44px;
+		left: 0;
+		right: 0;
+		bottom: 0; /* 改为0，不再留死高度，由 padding 控制 */
+		overflow-y: auto; /* 允许内部滚动 */
+		overflow-x: hidden;
+		background-color: #fafafa;
+		/* 增加惯性滚动，手感更好 */
+		-webkit-overflow-scrolling: touch; 
+		/* 初始底部内边距，会被 JS 动态修改以适应输入框高度 */
+		padding-bottom: 60px; 
+	}
+
+        .content-area.me-page-active { top: 0; }
+        .content-area.no-bottom-nav { bottom: 0; }
+        .page { display: none; height: 100%; padding: 0; }
+        .page.active { display: block; }
+        
+        #chat-page .page-content {
+            padding: 0;
+        }
+		/* ============================================================ */
+		/* 【核心修复】全局变量定义 */
+		/* ============================================================ */
+		:root {
+			/* 默认值给50px，JS加载后会更新为精确值 */
+			--chat-bar-height: 50px; 
+		}
+
+        /* ============================================================ */
+        /* 【2. 顶部栏样式】*/
+        /* ============================================================ */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 44px;
+            background-color: #f8f8f8; 
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            z-index: 998;
+        }
+        #avatar-edit-top { background-color: #000; border-bottom: none; }
+        #avatar-edit-top .top-bar-back,
+        #avatar-edit-top .top-bar-title,
+        #avatar-edit-top .top-bar-right-btn { color: #fff; }
+        #avatar-edit-top .top-bar-back { display: flex; }
+        .top-bar-back {
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            color: #07c160; font-size: 18px; cursor: pointer; display: none;
+        }
+        .top-bar-title {
+            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+            font-size: 18px; font-weight: 500; color: #333; max-width: 200px;
+            text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .top-bar-right-btn {
+            position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+            width: auto; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            color: #07c160; font-size: 16px; cursor: pointer; border: none; background: transparent; outline: none; padding: 0 5px;
+        }
+        #avatar-more-btn { transform: translateY(-50%) rotate(90deg); }
+
+        /* ============================================================ */
+        /* 【3. 页面内容容器样式】*/
+        /* ============================================================ */
+        .page-content {min-height: 100%; padding: 10px; }
+        #me-page .page-content { padding-top: 20px; }
+        #user-info-page .page-content { padding-top: 15px; }
+        #avatar-edit-page .page-content {
+            background-color: #000; display: flex; align-items: center; justify-content: center;
+            padding: 0 !important; width: 100%; height: 100%; padding-top: 44px !important; box-sizing: border-box;
+        }
+        #name-edit-page .page-content, #status-edit-page .page-content,
+        #gender-edit-page .page-content, #region-edit-page .page-content,
+        #mask-edit-page .page-content, #setting-page .page-content { padding: 20px; }
+
+        #chat-api-setting-page .page-content {
+            padding: 20px; display: flex; flex-direction: column;
+        }
+        #api-settings-form { flex-grow: 1; }
+        
+        #new-chat-page .page-content { padding: 20px; }
+        .form-section { margin-bottom: 25px; }
+        .form-label { display: block; font-size: 14px; color: #666; margin-bottom: 8px; }
+        .form-input, .form-textarea, .form-select {
+            width: 100%; padding: 10px 15px; border: 1px solid #ddd;
+            border-radius: 4px; font-size: 16px; background-color: #fff;
+        }
+        .form-input:focus, .form-textarea:focus, .form-select:focus { border-color: #07c160; outline: none; }
+        .form-textarea { height: 120px; resize: vertical; }
+
+        /* ============================================================ */
+        /* 【4. 输入框和表单样式】*/
+        /* ============================================================ */
+        .name-input {
+            width: 100%; height: 44px; padding: 0 15px; border: 1px solid #eee;
+            border-radius: 4px; font-size: 17px; outline: none; background-color: #fff;
+        }
+        .name-input:focus { border-color: #07c160; }
+        .mask-input {
+            width: 100%; min-height: 200px; max-height: 300px; padding: 15px; border: 1px solid #eee;
+            border-radius: 4px; font-size: 17px; outline: none; background-color: #fff;
+            resize: none; overflow-y: auto; line-height: 1.5;
+        }
+        .mask-input:focus { border-color: #07c160; }
+        
+        .api-setting-group { margin-bottom: 25px; }
+        .api-setting-label { display: block; font-size: 14px; color: #666; margin-bottom: 8px; }
+        .api-setting-input {
+            width: 100%; height: 44px; padding: 0 15px; border: 1px solid #ddd;
+            border-radius: 4px; font-size: 16px; background-color: #fff;
+        }
+        .api-setting-input:focus { border-color: #07c160; outline: none; }
+        .model-fetch-container { display: flex; align-items: center; gap: 10px; }
+       .model-fetch-container select {
+			flex-grow: 1; height: 44px; padding: 0 10px; border: 1px solid #ddd;
+			border-radius: 4px; background-color: #fff; font-size: 16px;
+			
+			/* 新增：防止长文本撑爆布局，超出部分显示省略号 */
+			min-width: 0; 
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		.model-fetch-container button {
+			height: 44px; padding: 0 15px; border: none; border-radius: 4px; background-color: #07c160;
+			color: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 5px;
+			
+			/* 新增：保证按钮尺寸固定，绝对不会被挤小或挤出去 */
+			flex-shrink: 0; 
+		}
+        .model-fetch-container button:disabled { background-color: #999; cursor: not-allowed; }
+        .api-preset-bar {
+            display: flex; align-items: center; gap: 10px; padding: 10px;
+            background-color: #f0f0f0; border-radius: 8px; margin-bottom: 20px;
+        }
+        .api-preset-bar select {
+            flex-grow: 1; height: 40px; border: 1px solid #ccc; border-radius: 4px; padding: 0 8px;
+        }
+        .api-preset-bar button {
+            height: 40px; padding: 0 15px; border: 1px solid #07c160;
+            color: #07c160; background-color: #fff; border-radius: 4px; cursor: pointer;
+        }
+        .save-preset-btn {
+            width: 100%; height: 44px; margin-top: 10px; border-radius: 4px; border: 1px solid #07c160;
+            background-color: #fff; color: #07c160; font-size: 16px; font-weight: 500; cursor: pointer;
+        }
+        .character-info-card {
+            background-color: #fff; border-radius: 8px; padding: 15px;
+            display: flex; align-items: center; gap: 15px; border: 1px solid #eee;
+        }
+        .character-avatar-uploader {
+            width: 60px; height: 60px; border-radius: 8px; background-color: #e9e9e9;
+            border: 2px dashed #ccc; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; overflow: hidden; flex-shrink: 0;
+        }
+        .character-avatar-uploader i { font-size: 24px; color: #aaa; }
+        .character-avatar-uploader img { width: 100%; height: 100%; object-fit: cover; }
+        #character-name-input { 
+            font-size: 16px; font-weight: 400; padding: 10px 15px; border: 1px solid #ddd;
+        }
+        #character-name-input:focus {
+            border-color: #07c160; outline: none; box-shadow: none;
+        }
+        .switch-container {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; background-color: #fff; border: 1px solid #eee; border-radius: 4px;
+        }
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 28px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #07c160; }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* ============================================================ */
+        /* 【5. 底部导航栏样式】*/
+        /* ============================================================ */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: calc(60px + env(safe-area-inset-bottom));
+            background-color: #f8f8f8; border-top: 1px solid #eee; display: flex;
+            justify-content: space-around; align-items: center; z-index: 999;
+        }
+        .bottom-nav.hidden { display: none; }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #999; font-size: 12px; cursor: pointer; width: 25%; height: 100%;
+        }
+        .nav-item.active { color: #07c160; }
+        .nav-item i { font-size: 23px; margin-bottom: 4px; }
+        
+        /* 对话图标的未读红点 */
+        .nav-item-icon-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-item-unread-dot {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 10px;
+            height: 10px;
+            background-color: #ff3b30;
+            border-radius: 50%;
+            border: 2px solid #f8f8f8;
+            display: none;
+            z-index: 10;
+        }
+        .nav-item.has-chat-unread .nav-item-unread-dot {
+            display: block;
+        }
+
+        /* ============================================================ */
+        /* 【6. 按钮样式】*/
+        /* ============================================================ */
+        .menu-container { display: grid; grid-template-columns: 1fr; gap: 12px; padding: 0; }
+        .menu-btn, .setting-btn, .user-info-edit-btn {
+            display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+            height: 60px; background-color: #f8f8f8; border-radius: 4px; border: 1px solid #eee;
+            cursor: pointer; transition: background-color 0.2s; padding: 0 20px;
+        }
+        .menu-btn-left { display: flex; align-items: center; }
+        .menu-btn:hover, .user-info-card:hover, .user-info-edit-btn:hover, .setting-btn:hover { background-color: #f0f0f0; }
+        .menu-btn i.icon { font-size: 22px; color: #07c160; margin-right: 20px; width: 28px; text-align: center; }
+        .menu-btn-arrow { font-size: 14px; color: #999; }
+        .menu-btn-text, .setting-btn-text, .edit-btn-label { font-size: 14px; color: #333; }
+
+        /* ============================================================ */
+        /* 【7. 页面专属样式】*/
+        /* ============================================================ */
+        .user-info-card {
+            display: flex; align-items: center; justify-content: space-between; height: 100px;
+            background-color: #f8f8f8; border-radius: 4px; border: 1px solid #eee;
+            padding: 0 20px; margin-bottom: 12px; cursor: pointer; transition: background-color 0.2s;
+        }
+        .user-avatar, .avatar-preview {
+            width: 60px; height: 60px; border-radius: 4px; background-color: #07c160;
+            display: flex; align-items: center; justify-content: center; color: white;
+        }
+        .user-avatar { font-size: 24px; margin-right: 50px; }
+        .avatar-preview { width: 40px; height: 40px; font-size: 18px; margin-right: 10px; object-fit: cover; }
+        .user-text-area { flex: 1; }
+        .user-name { font-size: 18px; color: #333; font-weight: 500; margin-bottom: 4px; }
+        .user-status { font-size: 14px; color: #999; }
+        .edit-btn-label { width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .edit-btn-value {
+            flex: 1; font-size: 14px; color: #666; text-align: right; padding-right: 10px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .avatar-big-preview {
+            aspect-ratio: 1/1; width: 100%; background-color: #07c160;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: clamp(40px, 20vw, 120px); object-fit: cover; border-radius: 0;
+        }
+        
+        #chat-list-container { display: flex; flex-direction: column; }
+        .chat-card {
+            display: flex; align-items: center; padding: 10px 15px;
+            background-color: #fff; border-bottom: 1px solid #f0f0f0;
+            cursor: pointer; transition: background-color 0.2s;
+        }
+        .chat-card:hover { background-color: #f5f5f5; }
+        .chat-avatar {
+            width: 50px; height: 50px; border-radius: 8px; margin-right: 15px;
+            flex-shrink: 0; background-color: #e9e9e9; display: flex;
+            align-items: center; justify-content: center; overflow: visible; overflow: hidden; 
+        }
+        .chat-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .chat-avatar i { font-size: 24px; color: #aaa; }
+        .chat-info { flex-grow: 1; overflow: hidden; }
+        .chat-info-top {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 4px;
+        }
+        .chat-name { font-size: 16px; font-weight: 500; color: #333; }
+        .chat-time { font-size: 12px; color: #999; flex-shrink: 0; margin-left: 10px; }
+        .chat-last-msg {
+            font-size: 14px; color: #888; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis;
+        }
+		/* ============================================================ */
+		/* 分组折叠与拖拽排序样式 */
+		/* ============================================================ */
+		.chat-group-wrapper {
+			background: transparent;
+		}
+
+		.chat-group-header {
+			font-size: 12px;
+			color: #888;
+			padding: 12px 15px 6px 15px;
+			background-color: transparent;
+			font-weight: bold;
+			letter-spacing: 1px;
+			border-bottom: none;
+			display: flex;         /* 新增：Flex布局以排列图标 */
+			align-items: center;   /* 新增：垂直居中 */
+			cursor: pointer;       /* 新增：手型指针，提示可点击 */
+			user-select: none;     /* 新增：防止双击时选中文本 */
+		}
+
+		/* 标题文字区域撑开剩余空间 */
+		.chat-group-header .group-title {
+			flex: 1;
+			display: flex;
+			align-items: center;
+		}
+		.chat-group-header .group-title i {
+			margin-right: 5px;
+		}
+
+		/* 折叠/展开 箭头图标 */
+		.chat-group-header .toggle-icon {
+			font-size: 14px;
+			color: #ccc;
+			padding-left: 10px;
+			transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+		}
+		/* 折叠状态下，箭头向右 */
+		.chat-group-header.collapsed .toggle-icon {
+			transform: rotate(-90deg);
+		}
+
+		/* 拖拽手柄 (三道杠) */
+		.drag-handle {
+			padding: 5px 10px 5px 0;
+			cursor: grab;
+			font-size: 14px;
+			color: #c5c5c5;
+		}
+		.drag-handle:active {
+			cursor: grabbing;
+		}
+
+		/* 拖拽时生成的幽灵卡片效果 */
+		.sortable-ghost {
+			opacity: 0.4;
+			background-color: #e9e9e9;
+			border-radius: 8px;
+		}
+
+		/* 分组内容区 */
+		.chat-group-content {
+			display: block;
+			overflow: hidden;
+		}
+		.chat-group-content.collapsed {
+			display: none; /* 折叠时隐藏内容 */
+		}
+        /* ============================================================ */
+        /* 【8. 弹窗和隐藏元素样式】*/
+        /* ============================================================ */
+        .modal-mask {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(0, 0, 0, 0.5); z-index: 1000; display: none;
+            align-items: center; justify-content: center;
+        }
+        .modal-mask.show { display: flex; }
+        #upload-modal { align-items: flex-end; }
+        .upload-modal-content {
+            width: 100%; background-color: #fff; border-radius: 12px 12px 0 0;
+            padding: 15px 0; margin-bottom: env(safe-area-inset-bottom);
+        }
+        .upload-modal-btn {
+            height: 50px; line-height: 50px; text-align: center; font-size: 17px;
+            color: #333; cursor: pointer; border-bottom: 1px solid #eee;
+        }
+        .upload-modal-btn:last-child { border-bottom: none; margin-top: 10px; color: #ff3b30; }
+        .center-modal-content {
+            width: 90%; max-width: 320px; background-color: #fff; border-radius: 12px;
+            padding: 20px; display: flex; flex-direction: column; gap: 15px;
+        }
+        .center-modal-title { font-size: 18px; font-weight: 500; text-align: center; }
+        .center-modal-input {
+            width: 100%; height: 40px; border: 1px solid #ddd; border-radius: 4px; padding: 0 10px; font-size: 16px;
+        }
+        .center-modal-buttons { display: flex; gap: 10px; }
+        .center-modal-buttons button { flex: 1; height: 40px; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        .modal-btn-primary { background-color: #07c160; color: #fff; border: none; }
+        .modal-btn-secondary { background-color: #f0f0f0; color: #333; border: 1px solid #ddd; }
+        #preset-list-container {
+            max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+        }
+        .preset-list-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; background-color: #f8f8f8; border-radius: 4px;
+        }
+        .preset-list-item span { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .preset-delete-btn {
+            width: 30px; height: 30px; border: none; background: transparent;
+            color: #ff3b30; font-size: 18px; cursor: pointer; margin-left: 10px;
+        }
+        #avatar-upload-file, #avatar-upload-album, #backup-upload-file, #character-avatar-upload-input { display: none; }
+    
+		/* ============================================================ */
+        /* 【9. 对话卡片操作菜单样式】 */
+        /* ============================================================ */
+        .chat-actions-btn {
+            position: absolute;
+            right: 5px;
+            top: 5px;
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: transparent;
+            color: #ccc;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-actions-btn:hover {
+            background-color: #e0e0e0;
+            color: #888;
+        }
+        
+        /* 重新调整卡片内边距，为按钮留出空间 */
+        .chat-card {
+            position: relative; /* 必须设置为相对定位，作为按钮的定位基准 */
+            padding-right: 40px; /* 右侧留出空间给按钮 */
+        }
+
+		/* ============================================================ */
+		/* 【未读消息提示样式】*/
+		/* ============================================================ */
+		/* 头像上的红色圆点 */
+		.chat-avatar-unread {
+			position: absolute;
+			top: 2px;
+			left: 50px;
+			width: 18px;
+			height: 18px;
+			background-color: #ff3b30;
+			border-radius: 50%;
+			border: 3px solid #fff;
+			display: none;
+			z-index: 10;
+			align-items: center;
+			justify-content: center;
+			font-size: 10px;
+			font-weight: bold;
+			color: #fff;
+			min-width: 18px;
+			line-height: 18px;
+		}
+		.chat-card.has-unread .chat-avatar-unread {
+			display: flex;
+		}
+	.chat-avatar-unread::after {
+		content: attr(data-unread-count);
+	}
+	/* ============================================================ */
+    /* 【10.对话详情页面样式】 */
+	/* ============================================================ */
+
+	/* 1. 聊天输入底栏 (固定在底部，替代导航栏) */
+		.chat-input-bar {
+		position: fixed;
+		bottom: 0; 
+		left: 0; 
+		right: 0;
+		/* min-height 不需要写死，由内容撑开，但给个默认值 */
+		min-height: 50px; 
+		background-color: #f7f7f7;
+		border-top: 1px solid #dcdcdc;
+		display: flex;
+		/* 关键：改为底部对齐，这样输入框变高时是向上生长的 */
+		align-items: flex-end; 
+		padding: 8px 10px;
+		z-index: 1001;
+		gap: 10px;
+		transition: transform 0.1s; /* 键盘弹出时平滑过渡 */
+}
+
+	/* ============================================================ */
+
+        .chat-bar-group { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .chat-bar-center { flex-grow: 1; }
+
+        .chat-bar-btn {
+            width: 36px; height: 36px; border-radius: 50%;
+            border: none; background: transparent;
+            color: #333; font-size: 24px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        .chat-bar-btn:active { background-color: #e5e5e5; }
+        .ai-btn { color: #07c160; }
+
+        .chat-bar-input {
+            width: 100%;
+			/* 初始高度：一行的高度 */
+			height: 36px; 
+			min-height: 36px;
+			/* 最大高度：超过这个高度出现滚动条 (约4-5行) */
+			max-height: 120px; 
+			border: 1px solid #ddd; 
+			border-radius: 4px;
+			padding: 8px 10px; /* 调整 padding 让文字居中 */
+			font-size: 16px; 
+			background-color: #fff;
+			white-space: pre-wrap;
+			overflow-x: hidden;
+			overflow-y: auto; /* 内容多了允许内部滚动 */
+			resize: none;
+			box-sizing: border-box;
+			line-height: 20px; /* 设定明确的行高 */
+        }
+        .chat-bar-input:focus { border-color: #07c160; outline: none; }
+
+        /* ============================================================ */
+        /* 【11. 白色卡片样式】 */
+        /* ============================================================ */
+        .chat-menu-dropdown {
+            position: absolute;
+            top: 50px; right: 10px;
+            background-color: #fff; /* 背景改为白色 */
+            color: #333; /* 文字改为深色 */
+            border-radius: 4px;
+            width: 150px;
+            display: none;
+            box-shadow: 0 0 15px rgba(0,0,0,0.15); /* 添加阴影，让白底更明显 */
+            z-index: 2000;
+        }
+        .chat-menu-dropdown.show { display: block; }
+        
+        /* 修改上方的小三角箭头颜色 */
+        .chat-menu-dropdown::before {
+            content: ''; position: absolute; top: -6px; right: 12px;
+            width: 0; height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 6px solid #fff; /* 箭头颜色改为白色 */
+        }
+        
+        .chat-menu-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f5f5f5; /* 分割线颜色变浅 */
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .chat-menu-item:last-child { border-bottom: none; }
+        .chat-menu-item:active { background-color: #f0f0f0; } /* 点击反馈颜色 */
+
+        /* 3. 聊天内容区域调整 */
+        #chat-detail-page .page-content {
+            /* 底部留出空间给输入框，防止内容被遮挡 */
+            padding-bottom: 15px; 
+            display: flex; flex-direction: column;
+        }
+		
+		/* ============================================================ */
+        /* 【12. 新建对话页 - 多选滚动窗口 & 圆形勾选样式】 */
+        /* ============================================================ */
+        /* 修改 .scroll-select-box 样式，让它更适合容纳分组标题 */
+		.scroll-select-box {
+			width: 100%;
+			height: 150px; /* 稍微增高一点 */
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			background-color: #fff;
+			overflow-y: auto;
+			padding: 5px 0; /* 减少内边距，由内部元素控制 */
+		}
+
+		/* 复选框条目样式微调 */
+		.checkbox-item {
+			display: flex;
+			align-items: center;
+			cursor: pointer;
+			padding: 8px 10px; /* 移到这里控制 */
+			border-bottom: 1px solid #f9f9f9;
+			margin-bottom: 0; /* 移除原来的 margin */
+		}
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            cursor: pointer;
+            padding: 8px 0;
+            border-bottom: 1px solid #f9f9f9;
+        }
+        .checkbox-item:last-child { border-bottom: none; }
+        
+        /* 1. 隐藏原始的方形复选框 */
+        .checkbox-item input[type="checkbox"] {
+            display: none; 
+        }
+        
+        /* 2. 自定义圆形外框 */
+        .custom-check-circle {
+            width: 20px; height: 20px;
+            border: 2px solid #ccc; /* 未选中时的灰色边框 */
+            border-radius: 50%;     /* 变成圆形 */
+            margin-right: 12px;
+            position: relative;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        
+        /* 3. 自定义中间的实心圆点 (默认隐藏) */
+        .custom-check-circle::after {
+            content: "";
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0); /* 缩放到0，即隐藏 */
+            width: 10px; height: 10px;
+            background-color: #07c160; /* 选中时的绿色实心 */
+            border-radius: 50%;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        /* 4. 选中状态：外框变绿 */
+        .checkbox-item input[type="checkbox"]:checked + .custom-check-circle {
+            border-color: #07c160;
+        }
+        
+        /* 5. 选中状态：中间实心点出现 */
+        .checkbox-item input[type="checkbox"]:checked + .custom-check-circle::after {
+            transform: translate(-50%, -50%) scale(1);
+        }
+		
+		
+		/* ============================================================ */
+		/* 【13. 聊天气泡 & 消息流样式 (新增)】 */
+		/* ============================================================ */
+
+		/* 消息行容器 */
+		.chat-msg-row {
+			display: flex;
+			width: 100%;
+			margin-bottom: 15px;
+			align-items: flex-start;
+		}
+
+		/* 消息流向区分 */
+		.chat-msg-row.left { flex-direction: row; } /* AI 消息 */
+		.chat-msg-row.right { flex-direction: row-reverse; } /* 用户消息 */
+
+		/* 头像样式 */
+		.msg-avatar {
+			width: 40px; height: 40px;
+			border-radius: 6px;
+			flex-shrink: 0;
+			overflow: hidden;
+			background-color: #ddd;
+		}
+		.msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
+		.msg-avatar i { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; background-color: #ccc; }
+
+		/* 气泡内容包裹层 (包含气泡、时间详情) */
+		.msg-content-wrapper {
+			max-width: 70%;
+			margin: 0 10px;
+			display: flex;
+			flex-direction: column;
+			position: relative;
+		}
+		.chat-msg-row.left .msg-content-wrapper { align-items: flex-start; }
+		.chat-msg-row.right .msg-content-wrapper { align-items: flex-end; }
+
+		/* 气泡本体 */
+		.msg-bubble {
+			padding: 10px 12px;
+			border-radius: 6px;
+			font-size: 16px;
+			line-height: 1.5;
+			color: #333;
+			word-wrap: break-word;
+			overflow-wrap: break-word; 
+			word-break: break-word;
+			cursor: pointer; /* 点击显示时间 */
+		}
+
+		/* 气泡颜色 */
+		.chat-msg-row.left .msg-bubble {
+			background-color: #fff;
+			border: 1px solid #ededed;
+		}
+		.chat-msg-row.right .msg-bubble {
+			background-color: #95ec69; /* 微信绿 */
+			border: 1px solid #86d65e;
+			
+		}
+
+		/* 详情时间 (默认隐藏，点击气泡显示) */
+		.msg-detail-time {
+			font-size: 12px;
+			color: #b2b2b2;
+			margin-top: 4px;
+			display: none; /* 默认隐藏 */
+			user-select: none;
+		}
+		.msg-detail-time.show { display: block; }
+
+
+		/* 居中系统时间戳 (超过5分钟显示) */
+		.system-time-stamp {
+			text-align: center;
+			margin: 20px 0;
+		}
+		.system-time-stamp span {
+			background-color: rgba(0,0,0,0.1);
+			color: #fff;
+			font-size: 12px;
+			padding: 4px 8px;
+			border-radius: 4px;
+		}
+		
+		/* ============================================================ */
+		/* 14.撤回消息实体化 & 菜单样式 */
+		/* ============================================================ */
+
+		/* 1. 撤回消息的行容器 (为了容纳批量复选框，必须由 flex 布局) */
+		.chat-msg-row.system-row {
+			justify-content: center; /* 默认居中 */
+			width: 100%;
+			margin-bottom: 15px;
+			position: relative;
+		}
+
+		/* 2. 批量模式下，系统行需要左对齐以便显示复选框 */
+		.batch-mode-active .chat-msg-row.system-row {
+			justify-content: flex-start;
+		}
+
+		/* 3. 撤回消息的实体胶囊 */
+		.system-withdraw-msg {
+			background-color: rgba(0, 0, 0, 0.05); /* 浅灰色背景 */
+			padding: 4px 10px;
+			border-radius: 4px;
+			font-size: 12px;
+			color: #999;
+			cursor: pointer; /* 鼠标变为手型，提示可点击 */
+			user-select: none;
+			transition: background-color 0.2s;
+			position: relative; /* 为菜单定位做基准 */
+			display: inline-block;
+		}
+
+		.system-withdraw-msg:active {
+			background-color: rgba(0, 0, 0, 0.1); /* 点击反馈 */
+		}
+
+		/* 4. 系统消息的菜单定位 (居中上方) */
+		.chat-msg-row.system-row .bubble-menu {
+			left: 50%;
+			transform: translateX(-50%);
+			transform-origin: bottom center;
+			bottom: 100%;
+			margin-bottom: 8px;
+		}
+		/* 菜单直接显示，无动画 */
+		.chat-msg-row.system-row .bubble-menu.show { 
+			display: flex;
+			animation: none;
+		}
+
+		/* 5. 系统消息菜单的小三角 (居中) */
+		.chat-msg-row.system-row .bubble-menu::after {
+			left: 50%;
+			margin-left: -6px; /* 居中修正 */
+			right: auto;
+		}
+		/* ============================================================ */
+		/* 【15. 气泡悬浮菜单样式 (新版)】 */
+		/* ============================================================ */
+
+		/* 确保包裹层相对定位，作为菜单定位的基准 */
+		.msg-content-wrapper {
+			position: relative; 
+			/* 其他样式保持不变... */
+		}
+
+		/* ============================================================ */
+		/* 【14. 气泡悬浮菜单样式 (修复版)】 */
+		/* ============================================================ */
+
+		.msg-content-wrapper {
+			position: relative;
+			display: flex;
+			flex-direction: column;
+		}
+
+		/* 黑色小卡片菜单容器 - 基础样式 */
+		.bubble-menu {
+			position: absolute;
+			bottom: 100%; /* 位于气泡上方 */
+			background-color: #333;
+			border-radius: 6px;
+			padding: 0; /*去掉内边距，完全由按钮填充 */
+			display: none;
+			flex-direction: row;
+			align-items: center;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+			z-index: 100;
+			margin-bottom: 8px;
+			white-space: nowrap;
+		}
+
+		/* --- 左侧 AI 消息菜单：左对齐 --- */
+		.chat-msg-row.left .bubble-menu {
+			left: 0;
+			transform-origin: bottom left;
+		}
+		/* 左侧小三角 */
+		.chat-msg-row.left .bubble-menu::after {
+			content: ''; position: absolute; top: 100%; left: 15px; /* 箭头靠左 */
+			border-width: 6px; border-style: solid; border-color: #333 transparent transparent transparent;
+		}
+
+		/* --- 右侧 用户 消息菜单：右对齐 --- */
+		.chat-msg-row.right .bubble-menu {
+			right: 0;
+			transform-origin: bottom right;
+		}
+		/* 右侧小三角 */
+		.chat-msg-row.right .bubble-menu::after {
+			content: ''; position: absolute; top: 100%; right: 15px; /* 箭头靠右 */
+			border-width: 6px; border-style: solid; border-color: #333 transparent transparent transparent;
+		}
+
+		/* 菜单显示动画 */
+		.bubble-menu.show { display: flex; animation: menuPop 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
+
+		@keyframes menuPop {
+			from { opacity: 0; transform: scale(0.8); }
+			to { opacity: 1; transform: scale(1); }
+		}
+
+		/* 菜单项文字按钮 */
+		.menu-option {
+			color: #fff; font-size: 13px; padding: 10px 14px; /* 增加点击区域 */
+			cursor: pointer; user-select: none; position: relative;
+		}
+		.menu-option:active { background-color: #444; border-radius: 6px; }
+
+		/* 分割线 */
+		.menu-option:not(:last-child)::after {
+			content: ''; position: absolute; right: 0; top: 12px; bottom: 12px;
+			width: 1px; background-color: #555;
+		}
+		
+		/* 简单的淡入动画 */
+		@keyframes fadeIn {
+			from { opacity: 0; transform: translateX(-50%) translateY(5px); }
+			to { opacity: 1; transform: translateX(-50%) translateY(0); }
+		}
+		
+		/* ============================================================ */
+		/* 【16. 编辑弹窗专属样式】 */
+		/* ============================================================ */
+		#edit-msg-input {
+			resize: none; /* 禁止手动拖动大小 */
+			font-family: inherit;
+			line-height: 1.5;
+		}
+		/* 确保弹窗层级最高 */
+		#edit-msg-modal { z-index: 2000; }
+
+		/* ============================================================ */
+		/* 【17. 历史记录加载器样式】 */
+		/* ============================================================ */
+		.history-loader {
+			text-align: center;
+			padding: 15px 0;
+			cursor: pointer;
+			font-size: 12px;
+			color: #999;
+			user-select: none;
+		}
+		.history-loader span {
+			background-color: rgba(0,0,0,0.05);
+			padding: 4px 12px;
+			border-radius: 10px;
+		}
+		.history-loader:active span {
+			background-color: rgba(0,0,0,0.1);
+		}
+		
+		/* ============================================================ */
+		/* 【18. 下拉加载动画专属样式】 */
+		/* ============================================================ */
+
+		/* 消息容器 (用于做位移动画) */
+		#chat-message-container {
+			transform: translateY(0);
+			/* 默认不加 transition，拖动时需要实时跟随；松手时才加 transition */
+		}
+		#chat-message-container.animating {
+			transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+		}
+
+		/* 顶部隐藏的加载提示区 */
+		.pull-refresh-spinner {
+			position: absolute;
+			top: -40px; /* 藏在顶部外面 */
+			left: 0;
+			width: 100%;
+			height: 40px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 14px;
+			color: #999;
+			z-index: 10;
+			opacity: 0;
+			transition: opacity 0.2s;
+		}
+		.pull-refresh-spinner.visible { opacity: 1; }
+		.pull-refresh-spinner i { margin-right: 6px; }
+
+		/* 旋转动画 */
+		.fa-spin-fast { animation: fa-spin 1s infinite linear; }
+		
+		
+		/* ============================================================ */
+		/* 【19. 新增功能样式：引用、撤回、预览条】 */
+		/* ============================================================ */
+
+		/* 1. 输入框上方的引用预览条 */
+		.reply-preview-bar {
+		  position: absolute;
+		  bottom: 100%; /* 位于输入栏正上方 */
+		  left: 0;
+		  right: 0;
+		  background-color: #f7f7f7;
+		  padding: 8px 12px;
+		  border-top: 1px solid #e5e5e5;
+		  border-bottom: 1px solid #e5e5e5;
+		  display: none; /* 默认隐藏 */
+		  align-items: center;
+		  justify-content: space-between;
+		  z-index: 1000;
+		  color: #666;
+		  font-size: 13px;
+		}
+		.reply-preview-bar.show { display: flex; }
+		.reply-text {
+		  overflow: hidden;
+		  text-overflow: ellipsis;
+		  white-space: nowrap;
+		  max-width: 85%;
+		  border-left: 3px solid #07c160;
+		  padding-left: 8px;
+		}
+		.reply-close-btn {
+		  font-size: 16px;
+		  color: #999;
+		  padding: 5px;
+		  cursor: pointer;
+		}
+
+		/* 2. 气泡内的引用卡片 - 合并所有定义，解决样式冲突 */
+		.msg-quote-card {
+		  display: flex;
+		  flex-direction: column;
+		  background-color: rgba(0, 0, 0, 0.05); /* 左侧AI气泡浅灰背景 */
+		  border-radius: 4px;
+		  padding: 6px 10px;
+		  margin-bottom: 8px; /* 和正文拉开距离 */
+		  border-left: 3px solid #ccc; /* 左侧装饰线（AI气泡） */
+		  font-size: 13px;
+		  color: #666;
+		  line-height: 1.4;
+		  user-select: none; /* 防止复制时选中 */
+		  cursor: default;
+		}
+		/* 引用卡片-用户名 */
+		.msg-quote-name {
+		  font-weight: 600;
+		  margin-bottom: 2px;
+		  font-size: 12px;
+		  opacity: 0.9; /* 微调透明度，名字更清晰 */
+		  color: #555;
+		}
+		/* 引用卡片-内容（最多2行，超出省略） */
+		.msg-quote-content {
+		  overflow: hidden;
+		  text-overflow: ellipsis;
+		  display: -webkit-box;
+		  -webkit-line-clamp: 2;
+		  -webkit-box-orient: vertical;
+		}
+
+		/* 右侧用户气泡 - 引用卡片专属样式（增强对比度，贴合原有设计） */
+		.chat-msg-row.right .msg-quote-card {
+		  background-color: rgba(0, 0, 0, 0.1); 
+		  border-left-color: #888; /* 加深装饰线，和右侧气泡匹配 */
+		  color: #444; /* 绿色背景下文字更清晰 */
+		}
+		/* 右侧气泡-引用名字（同步加深，保持视觉统一） */
+		.chat-msg-row.right .msg-quote-name {
+		  color: #333;
+		  opacity: 1;
+		}
+
+		/* 3. 撤回消息的系统提示 (复用 system-time-stamp，但稍微调整) */
+		.system-withdraw-msg {
+		  text-align: center;
+		  margin: 10px 0;
+		  font-size: 12px;
+		  color: #999;
+		}
+		.system-withdraw-msg span {
+		  padding: 2px 5px;
+		}
+		
+		/* ============================================================ */
+		
+		/* ============================================================ */
+		/* 【20. 批量删除模式专属样式】 */
+		/* ============================================================ */
+
+		/* 1. 复选框容器 (默认隐藏，宽度为0) */
+		.batch-checkbox-col {
+			width: 0;
+			overflow: hidden;
+			opacity: 0;
+			transition: all 0.2s ease; /* 添加动画效果 */
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		/* 2. 激活批量模式时，复选框显示 */
+		.batch-mode-active .batch-checkbox-col {
+			width: 40px; /* 腾出空间 */
+			opacity: 1;
+			margin-right: 5px;
+		}
+
+		/* 3. 复选框圆圈样式 */
+		.batch-circle {
+			width: 22px; height: 22px;
+			border: 2px solid #c5c5c5;
+			border-radius: 50%;
+			position: relative;
+			background-color: #fff;
+			flex-shrink: 0;
+		}
+
+		/* 4. 选中状态 (变成绿色实心) */
+		.batch-circle.checked {
+			background-color: #07c160;
+			border-color: #07c160;
+		}
+		.batch-circle.checked::after {
+			content: '';
+			position: absolute;
+			left: 7px; top: 3px;
+			width: 5px; height: 10px;
+			border: solid white;
+			border-width: 0 2px 2px 0;
+			transform: rotate(45deg);
+		}
+
+		/* 5. 底部批量操作栏 (固定在底部) */
+		.batch-action-bar {
+			position: fixed;
+			bottom: 0; left: 0; right: 0;
+			height: 50px;
+			background-color: #f7f7f7;
+			border-top: 1px solid #dcdcdc;
+			display: none; /* 默认隐藏 */
+			align-items: center;
+			justify-content: space-between;
+			padding: 0 20px;
+			padding-bottom: env(safe-area-inset-bottom);
+			z-index: 1100; /* 层级要比输入框高 */
+		}
+		.batch-action-bar.show { display: flex; }
+
+		.batch-btn {
+			font-size: 16px; border: none; background: transparent; cursor: pointer;
+		}
+		.batch-cancel { color: #333; }
+		.batch-delete { color: #ff3b30; font-weight: 600; }
+		.batch-delete:disabled { color: #ccc; }
+
+
+		/* ============================================================ */
+		/* 【21.全局基础样式】-> top-bar 区域修改 */
+		/* ============================================================ */
+
+		/* 聊天详情页顶栏，增加高度以容纳两行文字 */
+		#chat-detail-top {
+			height: 60px; /* 从 44px 增加到 60px */
+		}
+
+		/* 标题容器，改为垂直flex布局 */
+		#chat-detail-title-container {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, -50%);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 2px; /* 标题和副标题之间的间距 */
+		}
+
+		/* 主标题 */
+		.top-bar-main-title {
+			font-size: 16px;
+			font-weight: 500;
+			color: #333;
+			max-width: 200px;
+			text-align: center;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		/* 副标题 (状态) */
+		.top-bar-subtitle {
+			font-size: 12px;
+			color: #888;
+		}
+
+		/* 修正返回按钮和右侧按钮的垂直居中 */
+		#chat-detail-top .top-bar-back,
+		#chat-detail-top .top-bar-right-btn {
+			height: 60px; /* 与顶栏高度一致 */
+		}
+		
+		/* ============================================================ */
+		/* 【22. 对话卡片置顶 & 菜单样式 (新增)】 */
+		/* ============================================================ */
+
+		/* 1. 置顶对话卡片的特殊背景色 */
+		.chat-card.pinned {
+			background-color: #f5f5f5;
+		}
+
+		/* 2. 确保新菜单使用绝对定位，以便 JS 控制位置 */
+		#chat-card-action-menu {
+			position: absolute; /* 必须是 absolute */
+		}
+
+		/* ============================================================ */
+		/* 【新增/确认】AI 撤回内容气泡样式 */
+		/* ============================================================ */
+
+		/* 隐藏内容的特殊气泡 */
+		.ai-secret-bubble {
+			display: none; /* 默认隐藏 */
+			margin-top: 8px; /* 距离上方胶囊的间距 */
+			padding: 10px 14px;
+			background-color: #fff; /* 改为白色背景，更像气泡 */
+			border: 1px solid #e0e0e0;
+			border-radius: 8px;
+			color: #666;
+			font-size: 14px;
+			max-width: 85%;
+			position: relative;
+			box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* 加一点阴影 */
+			animation: fadeIn 0.3s ease;
+			word-wrap: break-word;
+		}
+
+		.ai-secret-bubble.show {
+			display: block;
+		}
+
+		/* 简单的淡入动画 */
+		@keyframes fadeIn {
+			from { opacity: 0; transform: translateY(-5px); }
+			to { opacity: 1; transform: translateY(0); }
+		}
+
+		/* 记忆设置页 - 长期记忆占位符 */
+		.long-term-placeholder {
+			background-color: #f9f9f9;
+			border: 2px dashed #ddd;
+			border-radius: 8px;
+			padding: 40px 20px;
+			text-align: center;
+			color: #aaa;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			transition: all 0.3s;
+		}
+
+		.long-term-placeholder:hover {
+			border-color: #ccc;
+			background-color: #f5f5f5;
+		}
+
+		.long-term-placeholder i {
+			font-size: 32px;
+			margin-bottom: 15px;
+			color: #ccc;
+		}
+
+		.long-term-placeholder p {
+			font-size: 14px;
+			margin: 0;
+		}
+		
+		/* ============================================================ */
+		/* 【23. 长期记忆编辑页面样式 (新增)】 */
+		/* ============================================================ */
+		#ltm-editor-container {
+			display: flex;
+			flex-direction: column;
+			gap: 15px;
+		}
+
+		.ltm-counter {
+			font-size: 14px;
+			color: #888;
+			padding: 5px;
+			background-color: #f5f5f5;
+			border-radius: 4px;
+			text-align: center;
+			border: 1px solid #eee;
+		}
+
+		.ltm-item {
+			display: flex;
+			align-items: flex-start;
+			gap: 10px;
+		}
+
+		.ltm-item textarea {
+			flex-grow: 1;
+			min-height: 80px;
+			resize: vertical;
+			padding: 10px;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			font-size: 14px;
+			line-height: 1.5;
+		}
+
+		.ltm-item-actions {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+			flex-shrink: 0;
+		}
+
+		.ltm-action-btn {
+			width: 36px;
+			height: 36px;
+			border: 1px solid #ddd;
+			background-color: #fff;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 16px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.ltm-action-btn:active {
+			background-color: #f0f0f0;
+		}
+
+		.ltm-action-btn.delete { color: #ff3b30; }
+		.ltm-action-btn.insert { color: #07c160; }
+		
+		/* ============================================================ */
+		/* 【新增】角色心声面板样式 (V2.0 - 卡片下拉菜单样式) */
+		/* ============================================================ */
+
+		/* 关键：给心声面板的父容器（顶部栏）添加相对定位，这是面板定位的基准 */
+		#chat-detail-top {
+			position: relative; 
+			overflow: visible; 
+		}
+
+		/* 面板主容器 */
+		#inner-status-modal {
+			position: absolute; /* 改为绝对定位 */
+			top: calc(100% + 5px); /* 定位在父容器（顶部栏）下方 5px 的位置 */
+			left: 50%; /* 先居中 */
+			transform: translateX(-50%); /* 再通过transform精确居中 */
+			width: 90%;
+			max-width: 300px;
+			
+			background-color: #ffffff; /* 浅色卡片背景 */
+			color: #333; /* 深色文字 */
+			border-radius: 8px;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 精致的阴影 */
+			border: 1px solid #e0e0e0;
+			
+			z-index: 500;
+			padding: 16px;
+			box-sizing: border-box;
+
+			/* 默认隐藏，并为动画做准备 */
+			opacity: 0;
+			transform: translateX(-50%) translateY(-10px) scale(0.95);
+			transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+			pointer-events: none; /* 隐藏时不可点击 */
+		}
+
+		/* 显示时的状态 */
+		#inner-status-modal.show {
+			opacity: 1;
+			transform: translateX(-50%) translateY(0) scale(1);
+			pointer-events: auto; /* 显示时可点击 */
+		}
+
+		/* 面板内容区域 */
+		.status-content {
+			display: flex;
+			flex-direction: column;
+			gap: 14px; /* 调整项目间距 */
+		}
+
+		.status-item {
+			display: flex;
+			align-items: center;
+			font-size: 14px;
+			flex-wrap: wrap; /* 允许换行 */
+		}
+
+		.status-label {
+			color: #666; /* 标签文字颜色 */
+			margin-right: 8px;
+			white-space: nowrap;
+			display: flex;
+			align-items: center;
+		}
+
+		.status-label .fas {
+			margin-right: 6px;
+			width: 16px;
+			text-align: center;
+			color: #5a99d4; /* 图标颜色 */
+		}
+
+		.status-value {
+			color: #111; /* 主要数值文字颜色 */
+			font-weight: 500;
+		}
+
+		/* 【核心修改】内心OS的便签效果 */
+		.os-item {
+			flex-direction: column;
+			align-items: flex-start;
+			background-color: #fffde7; /* 浅黄色背景，像便签纸 */
+			padding: 10px;
+			border-radius: 4px;
+			margin-top: 5px;
+			border-left: 3px solid #fdd835; /* 左侧的黄色加深条，模拟便签 */
+		}
+
+		.os-item .status-label {
+			margin-bottom: 5px;
+		}
+
+		.os-item .status-value {
+			color: #5d4037; /* 深褐色文字，在黄色背景上更清晰 */
+			font-weight: normal;
+			line-height: 1.5;
+		}
+
+
+		/* 醋意指数进度条 */
+		.jealousy-bar-container {
+			flex-grow: 1; /* 占满剩余空间 */
+			min-width: 120px; /* 最小宽度 */
+			background-color: #eee;
+			border-radius: 8px;
+			height: 16px;
+			position: relative;
+			overflow: hidden;
+		}
+
+		.jealousy-bar-fill {
+			width: 0%; 
+			height: 100%;
+			background: linear-gradient(90deg, #ff7e5f, #feb47b);
+			border-radius: 8px;
+			transition: width 0.5s ease-in-out;
+		}
+
+		.jealousy-bar-text {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			font-size: 10px;
+			color: #fff;
+			font-weight: bold;
+			text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+		}
+		
+		/* ============================================================ */
+		/* 【最终修复】强制显示心声面板 CSS */
+		/* ============================================================ */
+
+		/* 1. 关键修复：解除顶部栏的封印 */
+		/* 很多 Top Bar 默认会有 overflow: hidden，这会导致弹出的菜单被切掉 */
+		#chat-detail-top {
+			position: relative !important;
+			overflow: visible !important; 
+			z-index: 9999 !important; /* 确保顶部栏浮在所有内容之上 */
+		}
+
+		/* 2. 确保面板自身层级最高且不被透明度隐藏 */
+		#inner-status-modal {
+			/* 定位修正 */
+			position: absolute !important;
+			top: 100% !important; /* 紧贴底部 */
+			left: 50% !important;
+			transform: translateX(-50%) translateY(-10px) scale(0.95) !important;
+			
+			/* 外观修正 */
+			width: 90% !important;
+			max-width: 320px !important;
+			background-color: #ffffff !important;
+			box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important; /* 加深阴影便于观察 */
+			border: 1px solid #ccc !important;
+			z-index: 10000 !important; /* 比顶部栏更高 */
+			
+			/* 动画初始状态 */
+			opacity: 0 !important;
+			pointer-events: none !important;
+			transition: opacity 0.2s, transform 0.2s !important;
+			
+			/* 确保显示方式正确 */
+			display: block !important; 
+		}
+
+	
+
+		/* 4. 修复标题点击手型 */
+		#chat-detail-title-container {
+			cursor: pointer !important;
+			user-select: none; /* 防止双击选中文本 */
+		}
+		
+		/* ============================================================ */
+		/* 【核弹级修复】强制心声面板显示 CSS */
+		/* ============================================================ */
+
+		#inner-status-modal {
+			/* 1. 使用 fixed 定位，脱离文档流，相对于屏幕窗口定位 */
+			position: fixed !important;
+			
+			/* 2. 手动设定距离屏幕顶部的位置 */
+			/* 通常顶部栏高度在 50px-60px 左右，这里设为 60px 确保在名字下方 */
+			top: 60px !important; 
+			
+			/* 3. 居中逻辑 */
+			left: 50% !important;
+			transform: translateX(-50%) scale(0.95) !important; /* 默认稍微缩小 */
+			
+			/* 4. 外观样式 */
+			width: 90% !important;
+			max-width: 340px !important;
+			background-color: #ffffff !important;
+			border-radius: 12px !important;
+			box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important; /* 强阴影 */
+			border: 1px solid #eee !important;
+			
+			/* 5. 层级设为最大，保证在所有内容之上 */
+			z-index: 2147483647 !important; 
+			
+			/* 6. 隐藏状态 */
+			opacity: 0 !important;
+			visibility: hidden !important; /* 确保不占位，不可点 */
+			transition: opacity 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+		}
+
+		/* 显示状态 */
+		#inner-status-modal.show {
+			opacity: 1 !important;
+			visibility: visible !important;
+			/* 恢复大小并居中 */
+			transform: translateX(-50%) scale(1) !important;
+			/* 【核心修复】恢复点击拦截，防止点击穿透到背景层！ */
+			pointer-events: auto !important; 
+		}
+
+		/* 补充：确保顶部栏标题鼠标样式 */
+		#chat-detail-title-container {
+			cursor: pointer !important;
+			/* 给一个按下的反馈效果，确认点击生效 */
+			active: opacity 0.7; 
+		}
+		
+		/* ============================================================ */
+		/* 【世界书管理页面样式 - 只显示标题版】 */
+		/* ============================================================ */
+
+		/* 分类标题 */
+		.wb-category-group {
+			margin-bottom: 20px;
+		}
+
+		.wb-category-name {
+			font-size: 14px;
+			color: #888;
+			padding: 8px 15px;
+			font-weight: bold;
+			background-color: transparent;
+		}
+
+		/* 世界书卡片容器 */
+		.wb-card {
+			background-color: #fff;
+			padding: 0 15px; /* 左右内边距 */
+			height: 50px;    /* 固定高度，像通讯录一样 */
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			cursor: pointer;
+			transition: background-color 0.2s;
+			/* 只有中间有分割线，利用 border-bottom */
+			border-bottom: 1px solid #f0f0f0;
+		}
+
+		/* 分组内的第一个和最后一个卡片的圆角处理（可选，视整体风格而定，这里保持直角或微圆角） */
+		.wb-category-group .wb-card:first-of-type {
+			border-top: 1px solid #eee;
+		}
+		.wb-category-group .wb-card:last-of-type {
+			border-bottom: 1px solid #eee;
+		}
+
+		.wb-card:active {
+			background-color: #f5f5f5;
+		}
+
+		/* 卡片信息区 */
+		.wb-card-info {
+			flex-grow: 1;
+			overflow: hidden;
+			/* 垂直居中 */
+			display: flex;
+			align-items: center;
+			height: 100%;
+		}
+
+		/* 标题样式 - 只显示标题 */
+		.wb-card-title {
+			font-size: 16px;
+			color: #333;
+			font-weight: 500;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		/* 右侧箭头 */
+		.wb-card-arrow {
+			color: #ccc;
+			font-size: 14px;
+			margin-left: 10px;
+		}
+		
+		/* ============================================================ */
+		/* 【表情管理页面样式】 */
+		/* ============================================================ */
+
+		/* 1. 分类标签栏 (横向滚动) */
+		.emoticon-tabs {
+			display: flex;
+			overflow-x: auto;
+			background-color: #fff;
+			padding: 10px 15px;
+			margin: -10px -10px 15px -10px; /* 抵消 page-content 的 padding */
+			border-bottom: 1px solid #eee;
+			white-space: nowrap;
+			-webkit-overflow-scrolling: touch;
+		}
+
+		.emoticon-tab-item {
+			display: inline-block;
+			padding: 6px 16px;
+			margin-right: 10px;
+			background-color: #f5f5f5;
+			border-radius: 20px;
+			font-size: 14px;
+			color: #666;
+			cursor: pointer;
+			transition: all 0.2s;
+		}
+
+		.emoticon-tab-item.active {
+			background-color: #07c160;
+			color: #fff;
+			font-weight: 500;
+		}
+
+		/* 2. 表情网格布局 */
+		.emoticon-grid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr); /* 一行3个 */
+			gap: 10px;
+		}
+
+		/* 3. 表情卡片 */
+		.emoticon-card {
+			background-color: #fff;
+			border-radius: 8px;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			position: relative;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+			cursor: pointer;
+		}
+
+		/* 图片区域 (正方形) */
+		.emoticon-img-box {
+			width: 100%;
+			aspect-ratio: 1/1; /* 保持正方形 */
+			background-color: #f9f9f9;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			overflow: hidden;
+		}
+
+		.emoticon-img-box img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover; /* 填满 */
+		}
+
+		/* 描述文字区域 */
+		.emoticon-desc {
+			font-size: 12px;
+			color: #333;
+			padding: 6px 4px;
+			text-align: center;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			background-color: #fff;
+			border-top: 1px solid #f0f0f0;
+		}
+
+		/* 选中状态遮罩 (批量删除用) */
+		.emoticon-select-overlay {
+			position: absolute;
+			top: 0; left: 0; right: 0; bottom: 0;
+			background-color: rgba(0,0,0,0.4);
+			display: none;
+			align-items: center;
+			justify-content: center;
+			z-index: 10;
+		}
+
+		.emoticon-card.selected .emoticon-select-overlay {
+			display: flex;
+		}
+
+		.select-icon {
+			font-size: 24px;
+			color: #07c160;
+			background: #fff;
+			border-radius: 50%;
+			width: 30px;
+			height: 30px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		
+		/* ============================================================ */
+		/* 【表情分组管理 & 按钮修复样式】 */
+		/* ============================================================ */
+
+		/* 1. 分组管理容器 */
+		#emoticon-group-management {
+			margin-top: 30px;
+			padding-top: 20px;
+			border-top: 1px solid #f0f0f0;
+		}
+
+		.group-management-title {
+			font-size: 14px;
+			font-weight: 500;
+			color: #888;
+			margin-bottom: 15px;
+			text-align: center;
+		}
+
+		.group-management-actions {
+			display: flex;
+			gap: 15px;
+		}
+
+		/* 2. 重命名和删除按钮样式 */
+		.group-management-actions .batch-btn {
+			flex: 1; /* 按钮平分宽度 */
+			height: 44px;
+			border-radius: 8px;
+			font-weight: 500;
+		}
+
+		.rename-group-btn {
+			background-color: #f0f0f0;
+			border: 1px solid #ddd;
+			color: #333;
+		}
+
+		.delete-group-btn {
+			background-color: #fff;
+			border: 1px solid #ff3b30;
+			color: #ff3b30;
+		}
+
+		/* 3. 【核心修复】批量管理入口按钮容器 */
+		.emoticon-batch-starter {
+			margin-top: 20px;
+			padding: 0 10px; /* 稍微给点边距 */
+		}
+		
+
+		/* ============================================================ */
+		/* 【强制修复版】表情选取面板样式 */
+		/* ============================================================ */
+		.emoticon-picker-content {
+			height: 300px; /* 表情面板固定高度 */
+		}
+		/* 1. 外层容器：全屏覆盖，但背景透明 */
+		#emoticon-picker-modal {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			
+			/* 【关键1】必须比 .chat-input-bar (1001) 低！
+			   这样菜单打开时，你依然可以点击输入框，不会被菜单挡住 */
+			z-index: 990; 
+			
+			/* 【关键2】强制背景透明！双重保险 */
+			background-color: transparent !important;
+			background: none !important;
+			
+			/* 【关键3】恢复鼠标事件，否则无法监听到“点击空白处关闭” */
+			pointer-events: auto;
+			
+			/* 布局：内容底部对齐 */
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-end;
+			
+			/* 垫高底部：使用JS计算的高度，默认57px */
+			padding-bottom:50px;
+			
+			/* 默认隐藏 */
+			visibility: hidden;
+			opacity: 0;
+			transition: visibility 0s 0.3s, opacity 0.3s;
+		}
+
+		/* 显示状态 */
+		#emoticon-picker-modal.show,
+		#function-panel-modal.show {
+			visibility: visible;
+			opacity: 1;
+			transition: opacity 0.3s;
+		}
+
+		/* 2. 内容白色区域：这是实际可见的菜单 */
+		.emoticon-picker-content {
+			background-color: #f8f8f8; /* 必须有颜色，不然是透明的 */
+			width: 100%;
+			height: 300;/* 固定高度 */
+			
+			/* 顶部圆角和阴影 */
+			border-radius: 16px 16px 0 0;
+			box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+						
+			display: flex;
+			flex-direction: column;
+		}
+
+		/* 内容滑出 */
+		#emoticon-picker-modal.show .emoticon-picker-content,
+		#function-panel-modal.show .function-panel-content {
+			transform: translateY(0);
+		}
+
+		/* 3. 网格区域：修复图片乱飞的问题 */
+		.emoticon-picker-grid {
+			flex: 1;
+			overflow-y: auto;
+			padding: 10px;
+			
+			/* 强制网格布局 */
+			display: grid;
+			/* 自动填充列，最小宽度75px，解决一行只有一个巨大的问题 */
+			grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+			gap: 10px;
+		}
+
+		/* 4. 卡片样式：修复图片过大 */
+		.emoticon-picker-card {
+			background: #fff;
+			border-radius: 8px;
+			overflow: hidden;
+			/* 限制卡片高度，防止撑破 */
+			height: 100px; 
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+		}
+
+		.emoticon-picker-img-box {
+			width: 100%;
+			height: 70%; /* 图片占70% */
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 5px;
+		}
+
+		.emoticon-picker-img-box img {
+			max-width: 100%;
+			max-height: 100%;
+			object-fit: contain;
+		}
+
+		.emoticon-picker-desc {
+			height: 30%;
+			font-size: 10px;
+			color: #666;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+
+
+
+		/* ============================================================ */
+		/* 【24. 表情包气泡专属样式】 */
+		/* ============================================================ */
+
+		/* 1. 图片气泡容器：去除背景色和边框 */
+		.msg-bubble.image-bubble {
+			background-color: transparent !important; /* 强制透明 */
+			border: none !important;                  /* 去除边框 */
+			padding: 0 !important;                    /* 去除内边距 */
+			box-shadow: none !important;              /* 去除阴影（如果有） */
+		}
+
+		/* 2. 图片本身样式 */
+
+		.msg-bubble.image-bubble img.msg-image-content {
+		max-width: 150px;       /* 限制最大宽度 */
+		max-height: 150px;      /* 限制最大高度 */
+		border-radius: 8px;     /* 圆角 */
+		display: block;         /* 消除底部空隙 */
+		cursor: pointer;
+		/* 保持透明通道正常显示，无需额外处理 */
+		}
+
+		/* 3. 调整点击反馈 (可选) */
+		.msg-bubble.image-bubble:active {
+			opacity: 0.7;
+			transform: scale(0.98);
+			transition: transform 0.1s;
+		}
+
+		/* 4. 调整气泡菜单在图片上的位置 */
+		/* 稍微上移一点，避免挡住图片头部 */
+		.chat-msg-row .image-bubble + .bubble-menu {
+			bottom: 105%; 
+		}
+
+		/* ============================================================ */
+		/* 【新增】聊天背景设置样式 */
+		/* ============================================================ */
+
+		/* 1. 背景设置容器（适配URL输入+预览） */
+		/* 基础设置项布局优化（保证标签和输入框排版协调） */
+		.setting-item {
+			display: flex;
+			align-items: center;
+			padding: 12px 15px;
+			border-bottom: 1px solid #f0f0f0;
+		}
+
+		/* 设置项标签样式（固定宽度，避免挤压输入框） */
+		.setting-item-label {
+			width: 120px; /* 固定标签宽度，适配中文标签 */
+			font-size: 14px;
+			color: #333;
+			font-weight: 500;
+			flex-shrink: 0; /* 防止标签被压缩 */
+		}
+
+		/* 设置项内容容器（占满剩余宽度） */
+		.setting-item-content {
+			flex: 1; /* 占满父容器剩余宽度 */
+			padding-left: 10px;
+		}
+
+		/* 核心：URL输入框尺寸+样式优化 */
+		.setting-input#setting-character-bg-url {
+			/* 尺寸优化 */
+			width: 100%; /* 占满内容容器宽度 */
+			height: 44px; /* 舒适的高度，比默认输入框高一点，提升点击体验 */
+			padding: 0 15px; /* 左右内边距，输入文字不贴边 */
+			/* 样式优化（美观且符合通用UI规范） */
+			border: 1px solid #e5e5e5;
+			border-radius: 8px; /* 圆角更柔和 */
+			font-size: 14px;
+			color: #333;
+			outline: none;
+			box-sizing: border-box; /* 保证padding不超出宽度 */
+			transition: border-color 0.2s;
+		}
+
+		/* 输入框聚焦样式（提升交互反馈） */
+		.setting-input#setting-character-bg-url:focus {
+			border-color: #409eff; /* 常用的蓝色聚焦态，符合用户认知 */
+			box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1); /* 轻微外发光，突出聚焦 */
+		}
+
+		/* 占位符文字样式优化 */
+		.setting-input#setting-character-bg-url::placeholder {
+			color: #999; /* 浅灰色，不刺眼 */
+			font-size: 13px; /* 比输入文字稍小一点 */
+		}
+		/* 5. 聊天详情页应用背景时的样式类 */
+		/* 当 JS 给 #chat-detail-page 设置 style="background-image:..." 时生效 */
+		#chat-detail-page {
+			background-size: cover;
+			background-position: center;
+			background-repeat: no-repeat;
+			background-attachment: fixed; /* 背景固定，产生视差效果 */
+			transition: background-image 0.3s ease;
+		}
+
+		/* 6. 优化：当有背景图时，气泡颜色稍微调整以保证可读性 (可选) */
+		/* 你可以根据需要决定是否要给消息容器加一个半透明遮罩 */
+		
+		/* ============================================================ */
+		/* 【25. 背景图遮挡修复补丁】 */
+		/* ============================================================ */
+
+		/* 1. 强制聊天详情页自身透明，防止遮挡父容器背景 */
+		#chat-detail-page {
+			background-color: transparent !important;
+			background-image: none !important; /* 我们改用 JS 控制父容器背景，所以这里取消自身的背景 */
+			min-height: 100% !important; /* 确保高度撑开 */
+			height: auto !important;     /* 允许随内容长高 */
+		}
+
+		/* 2. 强制内容区域透明 */
+		#chat-detail-page .page-content {
+			background-color: transparent !important;
+		}
+
+		/* 3. 确保主容器可以显示背景图，并设置样式 */
+		#main-content-area {
+			background-position: center;
+			background-size: cover;
+			background-repeat: no-repeat;
+			/* 建议使用 scroll 或去掉此属性。fixed 在部分手机上会导致背景消失 */
+			background-attachment: scroll; 
+			transition: background-image 0.3s ease;
+		}
+
+		/* ============================================================ */
+		/* 【26. 语音条气泡样式 (固定高度居中版)】 */
+		/* ============================================================ */
+
+		/* 1. 语音气泡基础容器 */
+		.msg-bubble.is-voice {
+			display: flex;
+			align-items: center; /* Flex 垂直居中 */
+			justify-content: space-between;
+			
+			/* 【核心】固定高度 */
+			height: 40px !important;
+			min-height: 40px !important;
+			max-height: 40px !important;
+			
+			/* 【调整】减小内边距，让图标离边缘更近 */
+			padding: 0 10px !important;
+			
+			cursor: pointer;
+			position: relative;
+			user-select: none;
+			box-sizing: border-box;
+			overflow: hidden; /* 防止溢出 */
+		}
+
+		/* 2. 声波图标通用样式 */
+		.voice-icon {
+			font-size: 19px; 
+			/* 设定固定尺寸容器，防止旋转后位置跑偏 */
+			width: 24px; 
+			height: 15px;
+			
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			
+			/* 禁止压缩 */
+			flex-shrink: 0;
+			
+			/* 消除所有 margin，由父容器 gap 控制 */
+			margin: 0;
+		}
+
+		/* 3. 时长文字 */
+		.voice-duration {
+			font-size: 15px;
+			font-weight: 500;
+			/* 让文字高度撑满，确保文字垂直重心稳定 */
+			line-height: 40px; 
+		}
+
+		/* --- 左侧 (AI) 语音样式 --- */
+		.chat-msg-row.left .msg-bubble.is-voice {
+			flex-direction: row; 
+			justify-content: flex-start;
+			color: #333;
+		}
+		.chat-msg-row.left .msg-bubble.is-voice .voice-icon {
+			/* 图标和文字的间距 */
+			margin-right: 4px; 
+			
+			/* 
+			   旋转45度
+			   不用 translate 微调了，依靠 flex 居中
+			*/
+			transform: rotate(45deg); 
+			color: #333; 
+		}
+
+		/* --- 右侧 (用户) 语音样式 --- */
+		.chat-msg-row.right .msg-bubble.is-voice {
+			flex-direction: row-reverse; /* 反转：文字在左，图标在右 */
+			justify-content: flex-start;
+			color: #333;
+		}
+		.chat-msg-row.right .msg-bubble.is-voice .voice-icon {
+			/* 图标和文字的间距 */
+			margin-left: 4px;
+			
+			/* 旋转-135度 */
+			transform: rotate(-135deg); 
+		}
+
+		/* 4. 语音转文字小卡片 (保持不变) */
+		.voice-transcription {
+			background-color: #fff;
+			border-radius: 8px;
+			border: 1px solid #e0e0e0;
+			box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+			font-size: 13px;
+			color: #333;
+			line-height: 1.5;
+			margin-top: 6px;
+			padding: 8px 10px;
+			display: none; 
+			max-height: 120px; 
+			overflow-y: auto;  
+			word-wrap: break-word;
+			min-width: 150px;
+			max-width: 260px; 
+		}
+
+		.chat-msg-row.right .voice-transcription {
+			background-color:  #fff; 
+			align-self: flex-end; 
+		}
+
+		.voice-transcription.show {
+			display: block;
+			animation: fadeIn 0.3s ease;
+		}
+		/* ============================================================ */
+		/* 【新增】人生档案页面样式 */
+		/* ============================================================ */
+
+		/* 1. “添加”按钮样式 */
+		.add-event-btn {
+			width: 100%;
+			height: 44px;
+			border-radius: 8px;
+			border: 1px solid #07c160;
+			background-color: #fff;
+			color: #07c160;
+			font-size: 16px;
+			font-weight: 500;
+			cursor: pointer;
+			margin-bottom: 20px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+		}
+		.add-event-btn:active {
+			background-color: #f0f0f0;
+		}
+
+		/* 2. 事件列表容器 */
+		#life-events-list {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+		}
+
+		/* 3. 单个事件条目 */
+		.life-event-item {
+			display: flex;
+			align-items: flex-start;
+			gap: 10px;
+			background-color: #fff;
+			padding: 12px;
+			border-radius: 6px;
+			border: 1px solid #eee;
+		}
+
+		.life-event-item .date {
+			font-family: monospace; /* 等宽字体，让日期对齐更好看 */
+			font-size: 13px;
+			color: #888;
+			background-color: #f5f5f5;
+			padding: 4px 6px;
+			border-radius: 4px;
+			white-space: nowrap;
+		}
+
+		.life-event-item textarea {
+			flex-grow: 1;
+			border: none;
+			background: transparent;
+			padding: 2px;
+			font-size: 14px;
+			line-height: 1.5;
+			resize: none;
+			min-height: 40px; /* 最小高度，防止内容太少时塌陷 */
+			outline: none;
+		}
+		.life-event-item textarea:focus {
+			background-color: #f9f9f9; /* 聚焦时给个背景提示 */
+		}
+
+		.life-event-delete-btn {
+			width: 32px;
+			height: 32px;
+			border: none;
+			background: transparent;
+			color: #ccc;
+			font-size: 16px;
+			cursor: pointer;
+			flex-shrink: 0;
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.life-event-delete-btn:hover {
+			background-color: #f5f5f5;
+			color: #ff3b30;
+		}
+		
+		/* ============================================================ */
+		/* 【适配优化】人生档案弹窗在小屏上的显示 */
+		/* ============================================================ */
+
+		/* 确保日期选择器不会超出容器 */
+		#add-life-event-date-input {
+			width: 100% !important; /* 强制宽度 100% */
+			max-width: 100% !important;
+			box-sizing: border-box !important; /* 核心：让 padding 不会增加额外宽度 */
+			padding: 10px;
+			font-size: 14px; /* 稍微缩小字号以适应屏幕 */
+			-webkit-appearance: none; /* 清除 iOS 默认外观 */
+			appearance: none;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			background-color: #fff;
+			height: 40px; /* 固定高度，防止错位 */
+		}
+
+		/* 优化弹窗本身在窄屏上的外边距 */
+		.center-modal-content {
+			width: 85% !important; /* 给左右留出足够的空隙 */
+			max-width: 320px;
+			padding: 20px 15px !important; /* 减少水平内边距 */
+			box-sizing: border-box;
+		}
+
+		/* 确保 textarea 在小屏下也不会出问题 */
+		#add-life-event-input {
+			width: 100%;
+			box-sizing: border-box;
+			font-size: 14px;
+			resize: none;
+		}
+		
+		/* ============================================================ */
+		/* 【新增】图片气泡样式 */
+		/* ============================================================ */
+
+
+		/* 1. 真实图片气泡 (去除背景色和边框) */
+		.msg-bubble.is-image {
+			background: transparent !important;
+			border: none !important;
+			padding: 0 !important;
+			box-shadow: none !important;
+		}
+		.msg-image-content {
+			max-width: 160px;
+			max-height: 200px;
+			border-radius: 8px;
+			display: block;
+			cursor: pointer;
+		}
+
+		/* ============================================================ */
+		/* 【重写】虚拟图片气泡样式 (固定尺寸版) */
+		/* ============================================================ */
+
+		/* 1. 基础状态 (显示图标) */
+		.msg-bubble.is-virtual {
+			background-color: #ffffff !important;
+			border: 1px solid #e0e0e0 !important;
+			border-radius: 6px !important;
+			padding: 0 !important;
+			
+			/* 【核心】设定固定尺寸 */
+			width: 140px;       
+			height: 140px;      
+			
+			/* 布局与交互 */
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			overflow: hidden; /* 必须隐藏，否则圆角会被内部滚动条破坏 */
+			box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+			transition: background-color 0.2s ease; /* 只做背景色过渡，不做大小过渡 */
+			position: relative;
+			box-sizing: border-box; /* 确保 padding 不会撑大盒子 */
+		}
+
+		/* 2. 激活状态 (显示文字) */
+		.msg-bubble.is-virtual.show-text {
+			/* 【核心】强制保持尺寸不变！覆盖掉之前的 auto 设置 */
+			width: 140px !important;
+			height: 140px !important;
+			min-width: unset !important;
+			min-height: unset !important;
+			max-width: unset !important;
+			max-height: unset !important;
+
+			/* 样式微调 */
+			background-color: #fff !important; 
+			padding: 10px !important; /* 给文字留出边距 */
+			
+			/* 布局调整：文字从左上角开始排 */
+			align-items: flex-start !important;
+			justify-content: flex-start !important;
+		}
+
+		/* --- 内部元素显示逻辑 --- */
+
+		/* A. 占位符容器 (图标部分) */
+		.virtual-placeholder {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			width: 100%;
+			height: 100%;
+			pointer-events: none;
+		}
+
+		/* 灰色大图标 */
+		.virtual-icon {
+			font-size: 32px;
+			color: #d0d0d0;
+			margin-bottom: 8px;
+		}
+
+		/* 灰色小字 */
+		.virtual-text {
+			font-size: 12px;
+			color: #b0b0b0;
+		}
+
+		/* B. 描述文字容器 */
+		.virtual-desc-content {
+			display: none; /* 默认隐藏 */
+			width: 100%;
+			height: 100%; /* 占满剩余空间 */
+			
+			font-size: 13px;
+			color: #333;
+			line-height: 1.5;
+			text-align: left;
+			white-space: pre-wrap; /* 保留换行 */
+			word-wrap: break-word; /* 防止长单词溢出 */
+			
+			/* 【关键】开启内部滚动 */
+			overflow-y: auto; 
+			
+			/* 隐藏滚动条但保留功能 (Webkit浏览器) */
+			scrollbar-width: thin; 
+		}
+
+		/* --- 状态切换 --- */
+
+		/* 当父级有 show-text 时，隐藏图标 */
+		.msg-bubble.is-virtual.show-text .virtual-placeholder {
+			display: none !important;
+		}
+
+		/* 当父级有 show-text 时，显示文字 */
+		.msg-bubble.is-virtual.show-text .virtual-desc-content {
+			display: block !important;
+			animation: fadeIn 0.2s ease;
+		}
+
+		/* 简单的淡入动画 */
+		@keyframes fadeIn {
+			from { opacity: 0; }
+			to { opacity: 1; }
+		}
+		
+		/* ============================================================ */
+		/* 【独立】功能面板样式 (附件菜单) */
+		/* ============================================================ */
+		
+		.function-panel-content{
+			background-color: #f8f8f8; /* 必须有颜色，不然是透明的 */
+			width: 100%;
+			height: auto;
+			
+			/* 顶部圆角和阴影 */
+			border-radius: 16px 16px 0 0;
+			box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+			
+			display: flex;
+			flex-direction: column;
+		}
+
+
+		/* 1. 外层容器：全屏占位，透明，位于输入框之下 */
+		#function-panel-modal {
+			position: fixed;
+			top: 0; 
+			left: 0; 
+			right: 0; 
+			bottom: 0;
+			
+			/* 必须比输入框(.chat-input-bar z-index:1001)低 */
+			z-index: 990;
+			
+			/* 【强制透明】绝对不要黑色遮罩 */
+			background-color: transparent !important;
+			background: none !important;
+			
+			/* 让鼠标穿透透明区域，点到后面的聊天记录 */
+			pointer-events: none;
+			
+			/* 底部对齐布局 */
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-end;
+			
+			/* 【核心位移】底部垫高 = 输入框高度 (JS计算) */
+			padding-bottom: 50px;
+			
+			/* 默认隐藏 */
+			visibility: hidden;
+			transition: visibility 0s 0.25s;
+		}
+
+		/* 显示状态 */
+		#function-panel-modal.show {
+			visibility: visible;
+			transition-delay: 0s;
+			/* 显示时恢复对自身的点击检测（用于点击空白关闭） */
+			pointer-events: auto;
+		}
+
+		/* 2. 内容区域：灰色背景，从底部划出 */
+		.function-panel-content {
+			/* 必须恢复点击，否则点不了按钮 */
+			pointer-events: auto;
+			
+			width: 100%;
+			/* 功能面板背景色 */
+			background-color: #f7f7f7; 
+			border-top: 1px solid #dcdcdc;
+			padding: 20px 20px 30px 20px;
+			
+
+			/* 确保盒子模型正确 */
+			box-sizing: border-box; 
+		}
+
+		/* 内容滑出 */
+		#function-panel-modal.show .function-panel-content {
+			transform: translateY(0);
+		}
+
+		/* 3. 宫格布局 (强制4列) */
+		.function-grid {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			row-gap: 20px;
+			column-gap: 15px;
+		}
+
+		/* 单个功能项样式 (保持你原来的) */
+		.func-item {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			cursor: pointer;
+		}
+		.func-icon {
+			width: 60px;
+			height: 60px;
+			background-color: #fff;
+			border-radius: 12px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin-bottom: 8px;
+			border: 1px solid #e5e5e5;
+		}
+		.func-text {
+			font-size: 12px;
+			color: #666;
+			text-align: center;
+		}
+		
+		/* ---- 【新增】用于修复模型拉取按钮太小的问题 ---- */
+
+		/* 1. 这是包裹下拉框和按钮的容器 */
+		.model-select-wrapper {
+			display: flex;          /* 使用 Flex 布局，让内部元素水平排列 */
+			align-items: center;    /* 垂直居中对齐 */
+			width: 100%;
+		}
+
+		/* 2. 让下拉框自动伸展，占据所有剩余空间 */
+		.model-select-wrapper select {
+			flex-grow: 1;
+			min-width: 0; 
+			
+			/* 新增：单行省略号处理 */
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		/* 3. 这是“拉取模型”按钮的样式 */
+		.model-select-wrapper .fetch-btn {
+			flex-shrink: 0;         /* 禁止按钮被压缩变形 */
+			margin-left: 8px;       /* 与左侧的下拉框拉开 8px 的距离 */
+			padding: 0 12px;        /* 增加左右内边距，让按钮变得更宽、更协调 */
+			height: 38px;           /* 确保和输入框/下拉框高度一致 */
+			line-height: 38px;      /* 确保文字垂直居中 */
+			white-space: nowrap;    /* 防止按钮上的文字换行 */
+			font-size: 14px;        /* 调整字体大小，使其更清晰 */
+		}
+		
+		/* ============================================================ */
+		/* 【新增】朋友圈页面专属样式 */
+		/* ============================================================ */
+
+		/* 1. 透明顶部栏 */
+		#moments-top {
+			background-color: transparent;
+			border-bottom: none;
+			box-shadow: none;
+		}
+		#moments-top .top-bar-back,
+		#moments-top .top-bar-right-btn {
+			color: #ffffff; /* 白色图标 */
+			text-shadow: 1px 1px 2px rgba(0,0,0,0.5); /* 加一点阴影防止背景过亮看不清 */
+		}
+
+		/* 2. 朋友圈头部 (封面) */
+		.moments-header {
+			position: relative;
+			width: 100%;
+			height: 320px; /* 封面高度 */
+			margin-bottom: 30px; /* 为突出的头像留出空间 */
+		}
+		#moments-cover-img {
+			width: 100%;
+			height: 100%;
+			background-color: #ccc; /* 默认灰色背景 */
+			background-size: cover;
+			background-position: center;
+		}
+
+		/* 3. 封面上的用户信息 */
+		.moments-user-info {
+			position: absolute;
+			bottom: -25px; /* 关键: 负值让它向下溢出，覆盖在列表上 */
+			right: 15px;
+			display: flex;
+			align-items: center;
+		}
+		.moments-user-name {
+			color: #ffffff;
+			font-weight: bold;
+			font-size: 16px;
+			margin-right: 15px;
+			text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+		}
+		.moments-user-avatar {
+			width: 70px;
+			height: 70px;
+			border-radius: 8px;
+			border: 2px solid #fff;
+			background-color: #eee;
+			overflow: hidden;
+		}
+		.moments-user-avatar img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+
+		/* 4. 动态列表容器 */
+		.moments-feed {
+			padding: 0;
+		}
+
+		/* 5. 单条动态的样式 */
+		.moment-post {
+			display: flex;
+			gap: 12px;
+			padding: 15px;
+			border-bottom: 1px solid #f0f0f0;
+		}
+		.post-left .post-avatar {
+			width: 42px;
+			height: 42px;
+			border-radius: 6px;
+			overflow: hidden;
+		}
+		.post-left .post-avatar img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+
+		.post-main {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+		.post-author {
+			font-size: 16px;
+			font-weight: 500;
+			color: #586b95; /* 微信蓝 */
+		}
+		.post-content {
+			font-size: 15px;
+			line-height: 1.5;
+			word-wrap: break-word;
+		}
+
+		/* 6. 动态中的图片网格 */
+		.post-images {
+			display: grid;
+			gap: 6px;
+		}
+		.post-images.image-count-1 .post-image-item {
+			max-width: 200px;
+		}
+		.post-images.image-count-2, .post-images.image-count-4 {
+			grid-template-columns: repeat(2, 1fr);
+			max-width: 220px;
+		}
+		.post-images:not(.image-count-1):not(.image-count-2):not(.image-count-4) {
+			grid-template-columns: repeat(3, 1fr);
+			max-width: 280px;
+		}
+		.post-image-item {
+			width: 100%;
+			aspect-ratio: 1 / 1;
+			background-color: #f0f0f0;
+			overflow: hidden;
+		}
+		.post-image-item img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+
+		/* 7. 动态的元数据 (时间、操作按钮) */
+		.post-meta {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-top: 5px;
+		}
+		.post-timestamp {
+			font-size: 13px;
+			color: #aaa;
+		}
+		.post-action-btn {
+			width: 30px;
+			height: 20px;
+			background-color: #f7f7f7;
+			border-radius: 4px;
+			border: 1px solid #eee;
+			color: #586b95;
+			font-size: 14px;
+			letter-spacing: 2px;
+			text-align: center;
+			line-height: 18px;
+			font-weight: bold;
+			cursor: pointer;
+		}
+		
+		/* ============================================================ */
+		/* 【新增】发布朋友圈页面样式 */
+		/* ============================================================ */
+
+		/* 身份预览卡片 */
+		.persona-preview-card {
+			display: flex;
+			align-items: center;
+			background-color: #f9f9f9;
+			padding: 10px;
+			border-radius: 8px;
+			margin-top: 10px;
+			border: 1px solid #eee;
+		}
+
+		.pp-avatar {
+			width: 40px;
+			height: 40px;
+			border-radius: 4px;
+			background-color: #ddd;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			overflow: hidden;
+			margin-right: 12px;
+			flex-shrink: 0;
+		}
+		.pp-avatar img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+		.pp-avatar i {
+			color: #fff;
+			font-size: 20px;
+		}
+
+		.pp-info {
+			flex: 1;
+			overflow: hidden;
+		}
+
+		.pp-name {
+			font-size: 15px;
+			font-weight: 500;
+			color: #333;
+			margin-bottom: 2px;
+		}
+
+		.pp-mask {
+			font-size: 12px;
+			color: #999;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		/* 图片输入框组 */
+		.img-input-group {
+			margin-bottom: 10px;
+			animation: fadeIn 0.3s ease;
+		}
+		.img-input-group label {
+			font-size: 12px;
+			color: #888;
+			margin-bottom: 4px;
+			display: block;
+		}
+		
+		/* ============================================================ */
+		/* 【新增】朋友圈虚拟图片样式 */
+		/* ============================================================ */
+
+		.moment-virtual-card {
+			width: 100%;
+			height: 100%;
+			background-color: #f2f2f2;
+			border: 1px solid #e0e0e0;
+			border-radius: 4px; /* 朋友圈通常圆角较小 */
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			overflow: hidden;
+			position: relative;
+			box-sizing: border-box;
+		}
+
+		/* 默认状态：图标 + 提示文字 */
+		.mv-placeholder {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			width: 100%;
+			height: 100%;
+			pointer-events: none; /* 让点击穿透到父容器 */
+		}
+
+		.mv-icon {
+			font-size: 24px;
+			color: #ccc;
+			margin-bottom: 5px;
+		}
+
+		.mv-hint {
+			font-size: 12px;
+			color: #999;
+		}
+
+		/* 内容状态：文字描述 */
+		.mv-content {
+			display: none; /* 默认隐藏 */
+			width: 100%;
+			height: 100%;
+			padding: 8px;
+			font-size: 13px;
+			color: #333;
+			line-height: 1.4;
+			text-align: left; /* 朋友圈文字通常左对齐 */
+			white-space: pre-wrap;
+			word-wrap: break-word;
+			overflow-y: auto; /* 内容多时允许滚动 */
+			background-color: #fff;
+		}
+
+		/* --- 状态切换 --- */
+		/* 当添加了 show-text 类名时 */
+		.moment-virtual-card.show-text {
+			background-color: #fff;
+			border-color: #ccc;
+		}
+
+		.moment-virtual-card.show-text .mv-placeholder {
+			display: none;
+		}
+
+		.moment-virtual-card.show-text .mv-content {
+			display: block;
+			animation: fadeIn 0.2s ease;
+		}
+		
+		/* ============================================================ */
+		/* 【新增】朋友圈交互样式 (点赞/评论/删除) */
+		/* ============================================================ */
+
+		/* 1. 操作栏容器 (定位基准) */
+		.post-meta {
+			position: relative; /* 关键：让弹窗相对于这个容器定位 */
+		}
+
+		/* 2. 黑色弹窗菜单 (默认隐藏) */
+		.moment-action-menu {
+			position: absolute;
+			right: 40px; /* 在按钮左侧 */
+			top: -8px;   /* 垂直居中微调 */
+			background-color: #4c4c4c;
+			border-radius: 4px;
+			height: 36px;
+			display: flex;
+			align-items: center;
+			padding: 0;
+			
+			/* 动画效果：从右向左展开 */
+			width: 0;
+			opacity: 0;
+			overflow: hidden;
+			transition: width 0.2s ease, opacity 0.2s ease;
+		}
+
+		.moment-action-menu.show {
+			width: 190px; /* 展开后的宽度，根据按钮数量调整 */
+			opacity: 1;
+		}
+
+		/* 菜单项按钮 */
+		.moment-menu-item {
+			flex: 1;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			color: #fff;
+			font-size: 14px;
+			cursor: pointer;
+			white-space: nowrap;
+			height: 100%;
+		}
+		.moment-menu-item:active {
+			background-color: #3b3b3b;
+		}
+		.moment-menu-item i {
+			margin-right: 5px;
+		}
+		/* 分割线 */
+		.moment-menu-line {
+			width: 1px;
+			height: 20px;
+			background-color: #3b3b3b;
+		}
+
+		/* 3. 点赞评论展示区域 */
+		.moment-interactions {
+			background-color: #f7f7f7;
+			margin-top: 10px;
+			border-radius: 4px;
+			font-size: 14px;
+			position: relative;
+		}
+
+		/* 上方小三角 */
+		.moment-interactions::before {
+			content: '';
+			position: absolute;
+			top: -6px;
+			left: 15px;
+			width: 0;
+			height: 0;
+			border-left: 6px solid transparent;
+			border-right: 6px solid transparent;
+			border-bottom: 6px solid #f7f7f7;
+		}
+
+		/* 点赞列表 */
+		.moment-likes {
+			padding: 5px 10px;
+			color: #586b95; /* 微信蓝 */
+			line-height: 1.5;
+			border-bottom: 1px solid #eee;
+		}
+		.moment-likes
+		
+		/* ============================================================ */
+		/* 【新增】朋友圈高级样式 (V2.0) */
+		/* ============================================================ */
+
+		/* 1. 蓝色昵称 (微信蓝) */
+		.moment-user-blue {
+			color: #576b95;
+			font-weight: 500;
+			cursor: pointer;
+			text-decoration: none;
+		}
+		.moment-user-blue:active {
+			color: #3d4c6e; /* 点击变深色 */
+			background-color: #ccc; /* 点击背景变色 */
+		}
+
+		/* 2. 爱心样式 */
+		/* 实心红心 */
+		.fa-heart.liked {
+			color: #ff4d4f !important; /* 强制红色 */
+			font-weight: 900 !important; /* 实心 */
+		}
+		/* 空心灰心 (默认) */
+		.fa-heart.unliked {
+			color: #fff; /* 在黑色菜单里是白色 */
+			font-weight: 400; /* 空心 */
+		}
+		/* 列表前面的心 */
+		.moment-likes i {
+			color: #576b95; /* 默认蓝色 */
+			margin-right: 5px;
+		}
+		/* 如果当前用户点赞了，列表前面的心也变红 */
+		.moment-likes i.liked-icon {
+			color: #ff4d4f;
+		}
+
+		/* 3. 评论条目交互 */
+		.moment-comment-item {
+			cursor: pointer; /* 提示可点击回复 */
+		}
+		.moment-comment-item:active {
+			background-color: #e5e5e5; /* 点击反馈 */
+		}
+		
+		/* 刷新提示条样式优化 */
+		#moments-refresh-loader {
+			height: 0;
+			overflow: hidden;
+			background: #f1f1f1;
+			text-align: center;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 12px;
+			color: #666;
+			transition: height 0.3s ease;
+			width: 100%; /* 确保宽度 */
+		}
+		
+		/* ============================================================ */
+		/* 【新增】自定义美化页面专属样式 */
+		/* ============================================================ */
+
+		/* 代码输入框样式：等宽字体，深色背景可选（这里保持浅色但用等宽） */
+		.code-input {
+			font-family: "Menlo", "Monaco", "Consolas", "Courier New", monospace;
+			font-size: 13px;
+			line-height: 1.5;
+			white-space: pre;
+			background-color: #fcfcfc;
+			color: #333;
+			border: 1px solid #ddd;
+		}
+
+		.code-input:focus {
+			background-color: #fff;
+			border-color: #07c160;
+			box-shadow: 0 0 0 2px rgba(7, 193, 96, 0.1);
+		}
+
+		/* 预览图容器微调 */
+		#global-bg-uploader {
+			position: relative;
+			border: 2px dashed #ddd;
+			background-color: #fafafa;
+			transition: all 0.2s;
+		}
+
+		#global-bg-uploader:active {
+			background-color: #f0f0f0;
+			border-color: #ccc;
+		}
+		
+		/* 自定义样式注入的样式标签优先级 */
+		#custom-user-style {
+			display: none; /* 这是一个 style 标签，不需要显示 */
+		}
+
+		/* 确保上传组件的图片预览正确显示 */
+		#global-bg-uploader {
+			position: relative;
+			overflow: hidden;
+			background-size: cover;
+			background-position: center;
+		}
+		
+		/* ============================================================ */
+		/* 【27. 收藏页面样式 (新增)】 */
+		/* ============================================================ */
+
+		/* 收藏卡片容器 */
+		.fav-card {
+			background-color: #fff;
+			padding: 15px;
+			margin-bottom: 12px;
+			border-radius: 8px;
+			border: 1px solid #eee;
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+			position: relative;
+			transition: background-color 0.2s;
+		}
+
+		/* 顶部信息栏：头像、名字、时间 */
+		.fav-header {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.fav-avatar {
+			width: 36px;
+			height: 36px;
+			border-radius: 4px;
+			overflow: hidden;
+			flex-shrink: 0;
+			background-color: #eee;
+		}
+		.fav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+		.fav-avatar i { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #aaa; }
+
+		.fav-info {
+			flex-grow: 1;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+		}
+
+		.fav-name {
+			font-size: 14px;
+			font-weight: 500;
+			color: #333;
+		}
+
+		.fav-time {
+			font-size: 12px;
+			color: #999;
+		}
+
+		/* 内容区域 */
+		.fav-content {
+			font-size: 15px;
+			color: #333;
+			line-height: 1.5;
+			background-color: #f9f9f9;
+			padding: 10px;
+			border-radius: 6px;
+			word-wrap: break-word;
+		}
+
+		/* 语音消息特殊样式 */
+		.fav-content.is-voice {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			cursor: pointer;
+			background-color: #f0fdf4; /* 淡淡的绿色背景 */
+			border: 1px solid #dcfce7;
+			color: #166534;
+		}
+		.fav-content.is-voice:active {
+			background-color: #dcfce7;
+		}
+
+		/* 图片内容 */
+		.fav-content img {
+			max-width: 100%;
+			border-radius: 4px;
+			display: block;
+		}
+
+		/* 删除按钮 */
+		.fav-delete-btn {
+			position: absolute;
+			top: 15px;
+			right: 15px;
+			background: transparent;
+			border: none;
+			color: #ccc;
+			font-size: 14px;
+			cursor: pointer;
+			padding: 5px;
+		}
+		.fav-delete-btn:hover {
+			color: #ff3b30;
+		}
+
+		/* 暗黑模式适配 (如果用了自定义美化) */
+		body[style*="background-color: #111"] .fav-card {
+			background-color: #191919;
+			border-color: #333;
+		}
+		body[style*="background-color: #111"] .fav-name { color: #ddd; }
+		body[style*="background-color: #111"] .fav-content { background-color: #222; color: #ccc; }
+		
+		/* ============================================================ */
+		/* 【28. 视频通话专属样式】 */
+		/* ============================================================ */
+
+		/* 1. 视频通话主容器 */
+		#video-call-page {
+			position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+			overflow: hidden; display: none; z-index: 9999 !important; 
+		}
+		#video-call-page.active { display: block; }
+
+		.call-overlay {
+			width: 100%;
+			height: 100vh; /* 强制占满视口高度 */
+			display: flex;
+			flex-direction: column;
+			position: relative;
+			background-color: #111;
+			overflow: hidden; /* 【关键】禁止整个页面出现滚动条 */
+		}
+
+		/* 2. 顶部栏 */
+		.call-top-bar {
+			height: 60px; padding: 0 20px;
+			display: flex; align-items: center; justify-content: space-between;
+			position: absolute; top: 0; left: 0; right: 0;
+			z-index: 10;
+			background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+		}
+		.call-minimize-btn {
+			background: transparent; border: none; color: #fff; font-size: 20px; cursor: pointer;
+		}
+		.call-timer {
+			color: #fff; font-size: 16px; font-weight: 500; letter-spacing: 1px;
+		}
+
+		/* 3. 中间内容区 */
+		.call-content-area {
+			flex: 1; position: relative; width: 100%;
+			display: flex; flex-direction: column;
+			min-height: 0; overflow: hidden;
+		}
+
+		/* 视频背景占位 */
+		.video-bg-placeholder {
+			position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+			background-size: cover; background-position: center;
+			opacity: 0.4; /* 调暗背景，让文字更清晰 */
+			display: flex; flex-direction: column; align-items: center; justify-content: center;
+			color: rgba(255,255,255,0.3); z-index: 0;
+		}
+		.video-bg-placeholder i { font-size: 40px; margin-bottom: 10px; }
+
+		/* 文本流 (字幕/对话) */
+		.call-text-stream {
+			position: relative;
+			z-index: 1;
+			flex: 1; /* 占据剩余空间 */
+			
+			/* 【核心修复】开启滚动，并限制最小高度为0防止撑开 */
+			overflow-y: auto; 
+			min-height: 0; 
+			
+			padding: 70px 20px 20px 20px;
+			display: flex;
+			flex-direction: column;
+			gap: 15px;
+			-webkit-overflow-scrolling: touch;
+		}
+
+		/* 通话气泡 (半透明字幕风格) */
+		.call-bubble {
+			padding: 10px 14px;
+			border-radius: 12px;
+			font-size: 15px;
+			line-height: 1.6;
+			max-width: 90%;
+			word-wrap: break-word;
+			color: #fff;
+			text-shadow: 0 1px 2px rgba(0,0,0,0.5);		
+			white-space: pre-wrap; 
+		}
+		.call-bubble.ai {
+			background-color: rgba(255, 255, 255, 0.15);
+			align-self: flex-start;
+			border-bottom-left-radius: 2px;
+			backdrop-filter: blur(5px);
+		}
+		.call-bubble.user {
+			background-color: rgba(7, 193, 96, 0.6);
+			align-self: flex-end;
+			border-bottom-right-radius: 2px;
+			backdrop-filter: blur(5px);
+		}
+		.call-sys-msg {
+			align-self: center;
+			font-size: 12px; color: rgba(255,255,255,0.7);
+			background: rgba(0,0,0,0.4); padding: 4px 10px; border-radius: 12px;
+		}
+
+		/* 4. 底部操作区 */
+		.call-bottom-area {
+			padding: 15px;
+			/* 背景加深一点，确保看不到底下滚动的文字 */
+			background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.8), transparent); 
+			display: flex;
+			flex-direction: column;
+			gap: 15px;
+			z-index: 20; /* 保证层级最高 */
+			
+			/* 【核心修复】禁止被压缩，保证永远显示 */
+			flex-shrink: 0; 
+			
+			/* 适配 iPhone 底部横条 */
+			padding-bottom: calc(15px + env(safe-area-inset-bottom));
+		}
+
+		.call-input-wrapper {
+			display: flex; gap: 10px; align-items: flex-end;
+		}
+		#call-input-text {
+			flex: 1; background: rgba(255,255,255,0.15); border: none;
+			border-radius: 8px; padding: 10px; color: #fff; font-size: 14px;
+			resize: none; max-height: 100px; backdrop-filter: blur(5px);
+		}
+		#call-input-text:focus { outline: 1px solid rgba(255,255,255,0.3); }
+		#call-input-text::placeholder { color: rgba(255,255,255,0.5); }
+
+		#call-send-btn {
+			width: 60px; height: 36px; border-radius: 6px;
+			background-color: #07c160; color: #fff; border: none;
+			font-size: 14px; margin-bottom: 2px; cursor: pointer;
+		}
+
+		.call-action-wrapper {
+			display: flex; flex-direction: column; align-items: center; justify-content: center;
+		}
+		.call-hangup-btn {
+			width: 60px; height: 60px; border-radius: 50%;
+			background-color: #ff3b30; color: #fff; border: none;
+			font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+			box-shadow: 0 4px 10px rgba(255, 59, 48, 0.4);
+		}
+		.call-hangup-btn:active { transform: scale(0.95); }
+
+		/* 5. 悬浮小窗 */
+		#mini-call-float {
+			position: fixed; top: 100px; right: 0;
+			background-color: #07c160; color: #fff;
+			padding: 8px 12px 8px 15px;
+			border-top-left-radius: 20px; border-bottom-left-radius: 20px;
+			box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+			display: none; align-items: center; gap: 8px;
+			z-index: 3000; cursor: pointer;
+			font-size: 14px;
+			transition: transform 0.2s;
+		}
+		#mini-call-float:active { transform: scale(0.95); }
+
+		/* 6. 来电界面 */
+		.incoming-call-content {
+			display: flex; flex-direction: column; align-items: center;
+			color: #fff; width: 100%;
+		}
+		.incoming-avatar {
+			width: 100px; height: 100px; border-radius: 50%;
+			background-color: #333; margin-bottom: 20px;
+			overflow: hidden; border: 2px solid rgba(255,255,255,0.2);
+		}
+		.incoming-avatar img { width: 100%; height: 100%; object-fit: cover; }
+		.incoming-name { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+		.incoming-type { font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 60px; }
+
+		.incoming-actions {
+			display: flex; gap: 60px; width: 100%; justify-content: center;
+		}
+		.action-btn-group {
+			display: flex; flex-direction: column; align-items: center; gap: 10px;
+		}
+		.action-btn-group button {
+			width: 64px; height: 64px; border-radius: 50%; border: none;
+			font-size: 24px; color: #fff; cursor: pointer;
+		}
+		.hangup-btn { background-color: #ff3b30; }
+		.answer-btn { background-color: #07c160; animation: pulse 1.5s infinite; }
+
+		@keyframes pulse {
+			0% { box-shadow: 0 0 0 0 rgba(7, 193, 96, 0.7); }
+			70% { box-shadow: 0 0 0 15px rgba(7, 193, 96, 0); }
+			100% { box-shadow: 0 0 0 0 rgba(7, 193, 96, 0); }
+		}
+
+		/* 7. 通话记录列表样式 */
+		.call-log-bubble {
+			margin-bottom: 10px; padding: 10px; border-radius: 6px;
+			font-size: 13px; line-height: 1.5;
+		}
+		.call-log-bubble.user { background: #e9e9e9; color: #333; }
+		.call-log-bubble.ai { background: #fff; border: 1px solid #ddd; color: #333; }
+		.call-log-timestamp { font-size: 10px; color: #999; margin-bottom: 4px; display: block; }
+		
+		/* ============================================================ */
+		/* 【修复补丁】视频通话顶部栏 & 悬浮窗增强 */
+		/* ============================================================ */
+
+		/* 1. 顶部栏 (容器) */
+		.call-top-bar {
+			position: absolute; 
+			top: 0; 
+			left: 0; 
+			right: 0;
+			height: 80px; /* 增加高度 */
+			padding: 0 20px;
+			/* 适配手机顶部刘海 */
+			padding-top: env(safe-area-inset-top); 
+			
+			display: flex; 
+			align-items: center; 
+			justify-content: space-between; /* 两端对齐：左边缩小，中间时间 */
+			
+			z-index: 100; /* 保证在视频层之上 */
+			
+			/* 加深渐变背景，确保白字能看清 */
+			background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+			pointer-events: none; /* 让点击穿透空白区域 */
+		}
+
+		/* 2. 缩小按钮 (左上角) */
+		.call-minimize-btn {
+			background: rgba(255, 255, 255, 0.2); /* 半透明背景按钮 */
+			border: 1px solid rgba(255, 255, 255, 0.3);
+			width: 40px;
+			height: 40px;
+			border-radius: 50%; /* 圆形 */
+			color: #fff; 
+			font-size: 18px; 
+			cursor: pointer;
+			pointer-events: auto; /* 恢复点击 */
+			
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			backdrop-filter: blur(4px);
+			transition: background 0.2s;
+		}
+		.call-minimize-btn:active {
+			background: rgba(255, 255, 255, 0.4);
+		}
+
+		/* 3. 通话时长 (顶部中间) */
+		.call-timer {
+			color: #fff; 
+			font-size: 18px; 
+			font-weight: 600; 
+			font-family: monospace; /* 等宽字体，数字不跳动 */
+			letter-spacing: 1px;
+			text-shadow: 0 2px 4px rgba(0,0,0,0.8); /* 文字阴影 */
+			
+			/* 绝对居中定位 */
+			position: absolute;
+			left: 50%;
+			transform: translateX(-50%);
+			top: calc(20px + env(safe-area-inset-top)); /* 稍微靠下一点 */
+		}
+
+		/* 4. 悬浮小窗 (修复层级问题) */
+		#mini-call-float {
+			position: fixed; 
+			top: 120px; 
+			right: 0;
+			
+			background-color: #2ba245; /* 微信绿 */
+			color: #fff;
+			padding: 10px 15px 10px 20px;
+			border-top-left-radius: 25px; 
+			border-bottom-left-radius: 25px;
+			box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+			border: 1px solid rgba(255,255,255,0.2);
+			border-right: none;
+			
+			display: none; /* JS控制显示 */
+			align-items: center; 
+			gap: 10px;
+			
+			z-index: 10002; /* 【关键】必须比所有页面和弹窗都高 */
+			cursor: pointer;
+			font-size: 14px;
+			font-weight: 500;
+			transition: transform 0.2s, opacity 0.2s;
+		}
+
+		#mini-call-float i {
+			animation: blink 2s infinite; /* 图标闪烁表示通话中 */
+		}
+
+		@keyframes blink {
+			0% { opacity: 1; }
+			50% { opacity: 0.5; }
+			100% { opacity: 1; }
+		}
+		
+		/* --- 视频通话气泡菜单 (横向版) --- */
+		.v-bubble-menu {
+			position: absolute;
+			/* 让菜单在气泡正下方居中 */
+			top: 100%; 
+			left: 50%;
+			transform: translateX(-50%); 
+			
+			background: rgba(40, 40, 40, 0.95); /*以此加深背景*/
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			border-radius: 50px; /* 改成圆角胶囊状 */
+			padding: 0 5px;      /* 左右留点空隙 */
+			display: none;       /* 默认隐藏 */
+			flex-direction: row; /* 【关键】横向排列 */
+			align-items: center; /* 垂直居中 */
+			z-index: 100;
+			min-width: auto;     /* 宽度自适应 */
+			white-space: nowrap; /* 不换行 */
+			backdrop-filter: blur(8px);
+			box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+			margin-top: 8px; /* 稍微离气泡远一点 */
+		}
+
+		.v-bubble-menu.show {
+			display: flex;
+		}
+
+		.v-menu-item {
+			padding: 8px 16px; /* 增加点击区域 */
+			color: #fff;
+			font-size: 13px;
+			font-weight: 500;
+			cursor: pointer;
+			text-align: center;
+			border-right: 1px solid rgba(255, 255, 255, 0.15); /* 右侧分割线 */
+		}
+
+		/* 最后一个菜单项不要分割线 */
+		.v-menu-item:last-child {
+			border-right: none;
+		}
+
+		.v-menu-item:hover {
+			background: rgba(255, 255, 255, 0.1);
+		}
+
+		.v-menu-item.delete {
+			color: #ff4757; /* 删除按钮标红 */
+		}
+		/* 视频通话编辑弹窗样式 */
+		#video-edit-modal {
+			z-index: 10005 !important; /* 必须比视频页面(9999)和悬浮窗更高 */
+			background: rgba(0, 0, 0, 0.7); /* 深色遮罩 */
+		}
+
+		/* 确保文本框获得焦点时边框变色 */
+		#video-edit-input:focus {
+			outline: none;
+			border-color: #07c160 !important;
+		}
+		
+		/* ============================================================ */
+		/* 【修复】来电界面层级补丁 */
+		/* ============================================================ */
+
+		#incoming-call-modal {
+			position: fixed !important;
+			top: 0 !important;
+			left: 0 !important;
+			width: 100vw !important;
+			height: 100vh !important;
+			/* 必须高于输入栏(1001)和心声面板(10000) */
+			z-index: 20000 !important; 
+			background-color: #111 !important; /* 强制纯色背景，不透明 */
+			display: none; /* 默认隐藏 */
+			align-items: center;
+			justify-content: center;
+		}
+
+		#incoming-call-modal.show {
+			display: flex !important; /* 显示时使用 flex 居中内容 */
+		}
+
+		/* 确保内部容器不会被压扁 */
+		.incoming-call-content {
+			width: 100%;
+			height: 100%;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			padding-top: env(safe-area-inset-top);
+			padding-bottom: env(safe-area-inset-bottom);
+		}
+
+		/* 调整头像大小，让它在全屏下更协调 */
+		.incoming-avatar {
+			width: 120px !important;
+			height: 120px !important;
+			margin-bottom: 30px !important;
+			box-shadow: 0 0 20px rgba(255,255,255,0.1);
+		}
+		
+		/* ============================================================ */
+		/* 【新增】底部导航栏防遮挡占位符 */
+		/* ============================================================ */
+		.bottom-nav-spacer {
+			width: 100%;
+			/* 高度 = 导航栏高度 + 底部安全区 + 这里的 10px 缓冲 */
+			height: 60px;
+			flex-shrink: 0; /* 防止在 flex 布局中被压缩 */
+			background: transparent; /* 透明 */
+			pointer-events: none; /* 不阻挡点击 */
+			display: block;
+		}
+		
+		/* ============================================================ */
+		/* 【29. 修复通话记录弹窗层级】 */
+		/* ============================================================ */
+
+		/* 修复：将通用弹窗层级从 1000 提升到 2000 */
+		/* 原因：输入栏 z-index 是 1001，如果不提升，通话记录列表会被输入栏遮挡 */
+		.modal-mask {
+			z-index: 2000 !important;
+		}
+
+		/* 确保通话记录列表在小屏下也能完整显示，不被键盘顶飞 */
+		#call-history-list {
+			max-height: 60vh; /* 限制最大高度 */
+			overflow-y: auto; /* 允许内部滚动 */
+			-webkit-overflow-scrolling: touch;
+		}
+		
+		/* ============================================================ */
+		/* 【新增】模拟文件气泡样式 (类似虚拟图片，支持三段点击) */
+		/* ============================================================ */
+		.msg-bubble.is-file {
+			background-color: #ffffff !important;
+			border: 1px solid #e0e0e0 !important;
+			border-radius: 6px !important;
+			padding: 0 !important;
+			
+			width: 220px; 
+			height: 80px; 
+			
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			overflow: hidden;
+			box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+			transition: background-color 0.2s ease;
+			position: relative;
+			box-sizing: border-box;
+		}
+
+		/* 激活状态 (显示描述文字) */
+		.msg-bubble.is-file.show-text {
+			width: 220px !important;
+			height: 160px !important; 
+			background-color: #fff !important; 
+			padding: 10px !important; 
+			align-items: flex-start !important;
+			justify-content: flex-start !important;
+		}
+
+		.file-placeholder {
+			display: flex;
+			flex-direction: row; 
+			align-items: center;
+			justify-content: space-between;
+			width: 100%;
+			height: 100%;
+			padding: 12px 15px;
+			pointer-events: none;
+			box-sizing: border-box;
+		}
+
+		.file-info-box {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			overflow: hidden;
+			margin-right: 10px;
+		}
+
+		.file-name-text {
+			font-size: 14px;
+			color: #333;
+			font-weight: 500;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			margin-bottom: 4px;
+		}
+
+		.file-size-text {
+			font-size: 11px;
+			color: #999;
+		}
+
+		.file-icon-box {
+			width: 44px;
+			height: 44px;
+			background-color: #f5f5f5;
+			border-radius: 6px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-shrink: 0;
+		}
+
+		.file-icon {
+			font-size: 26px;
+		}
+
+		/* 状态切换复用逻辑 */
+		.msg-bubble.is-file.show-text .file-placeholder {
+			display: none !important;
+		}
+
+		.msg-bubble.is-file.show-text .virtual-desc-content {
+			display: block !important;
+			animation: fadeIn 0.2s ease;
+		}
+
+		/* 深色模式兼容补丁 (由于StyleManager可能使用了!important，这里直接加上深色兼容) */
+		body[style*="background-color: #111"] .msg-bubble.is-file,
+		body[style*="background-color: rgb(17, 17, 17)"] .msg-bubble.is-file {
+			background-color: #2c2c2c !important;
+			border-color: #444 !important;
+		}
+		body[style*="background-color: #111"] .file-name-text { color: #e0e0e0; }
+		body[style*="background-color: #111"] .file-icon-box { background-color: #3a3a3a; }
+		
+		/* ============================================================ */
+		/* 【钱包与支付系统样式】 */
+		/* ============================================================ */
+		
+		/* 钱包头部区域：微信绿色沉浸式风格 */
+		.wallet-header {
+			position: relative;
+			background: #07c160; /* 微信绿 */
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			/* 适配刘海屏，增加舒适的上下留白 */
+			padding-top: calc(50px + env(safe-area-inset-top));
+			padding-bottom: 50px;
+			color: #fff;
+		}
+
+		/* 返回按钮 */
+		.wallet-back-btn {
+			position: absolute;
+			top: max(15px, env(safe-area-inset-top));
+			left: 15px;
+			font-size: 20px;
+			color: #fff;
+			cursor: pointer;
+			z-index: 10;
+			padding: 5px;
+			width: 40px;
+			height: 40px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		/* 钱包大图标 */
+		.wallet-icon {
+			font-size: 45px;
+			margin-bottom: 15px;
+			color: #fff;
+		}
+
+		/* 余额标题文字 */
+		.wallet-balance-title {
+			font-size: 15px;
+			opacity: 0.9;
+			margin-bottom: 10px;
+		}
+
+		/* 余额数字大字号 */
+		.wallet-balance-amount {
+			font-size: 42px;
+			font-weight: bold;
+			color: #fff;
+		}
+
+		/* 交易明细区：圆角浮动在绿色背景上方 */
+		.transaction-section {
+			background-color: #fff;
+			min-height: calc(100vh - 220px);
+			border-top-left-radius: 16px;
+			border-top-right-radius: 16px;
+			margin-top: -20px; /* 向上浮动，盖住一点绿色背景 */
+			position: relative;
+			z-index: 2;
+			padding-bottom: 20px;
+		}
+
+		/* 列表小标题 */
+		.transaction-title {
+			padding: 20px 20px 10px 20px;
+			font-size: 15px;
+			font-weight: bold;
+			color: #333;
+			border-bottom: 1px solid #f0f0f0;
+		}
+
+		/* 单条交易明细 */
+		.transaction-item {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 15px 20px;
+			border-bottom: 1px solid #f9f9f9;
+		}
+
+		.trans-left { display: flex; flex-direction: column; gap: 6px; }
+		.trans-desc { font-size: 16px; color: #333; font-weight: 500; }
+		.trans-time { font-size: 13px; color: #999; }
+		.trans-right { font-size: 20px; font-weight: bold; }
+		
+		/* 进账橙色突出，支出黑色 */
+		.trans-right.positive { color: #fa9d3b; }
+		.trans-right.negative { color: #333; }
+
+		/* 支付气泡 (转账/红包) - 保持不变 */
+		.msg-bubble.is-payment {
+			background-color: #fa9d3b !important; /* 橙色基调 */
+			border: none !important;
+			border-radius: 6px !important;
+			padding: 0 !important;
+			width: 220px;
+			height: 95px !important;
+			display: flex;
+			flex-direction: column;
+			cursor: pointer;
+			overflow: hidden;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+		}
+		.msg-bubble.is-payment.redpacket {
+			background-color: #f0614d !important; /* 红包颜色 */
+		}
+		.msg-bubble.is-payment.accepted, 
+		.msg-bubble.is-payment.rejected {
+			opacity: 0.6;
+		}
+
+		.payment-placeholder {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			width: 100%;
+			height: 100%;
+			padding: 12px 15px;
+			box-sizing: border-box;
+		}
+		.payment-icon-box {
+			width: 40px;
+			height: 40px;
+			border-radius: 50%;
+			border: 1px solid rgba(255,255,255,0.5);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 20px;
+			color: #fff;
+			margin-right: 12px;
+			flex-shrink: 0;
+		}
+		.payment-info-box {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			overflow: hidden;
+			color: #fff;
+		}
+		.payment-amount-text {
+			font-size: 15px;
+			font-weight: 500;
+			margin-bottom: 2px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		.payment-desc-text {
+			font-size: 12px;
+			opacity: 0.8;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		.payment-footer {
+			height: 20px;
+			background-color: rgba(255,255,255,0.9);
+			font-size: 10px;
+			color: #999;
+			padding: 0 15px;
+			line-height: 20px;
+		}
+		
+		/* ============================================================ */
+		/* 修复：红包和转账气泡高度不足导致裁切 */
+		/* ============================================================ */
+		.msg-bubble.is-payment {
+			height: 95px !important; /* 原来是 80px，增加到 95px 确保文字显示完整 */
+		}
+
+		/* ============================================================ */
+		/* 微信风格：红包弹窗 UI */
+		/* ============================================================ */
+		.rp-modal-content {
+			width: 280px; 
+			height: 400px; 
+			background-color: #d13d2e; 
+			border-radius: 12px;
+			position: relative; 
+			overflow: hidden; 
+			display: flex; 
+			flex-direction: column; 
+			align-items: center; 
+			color: #fce2b2;
+			box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+		}
+		.rp-close-btn { 
+			position: absolute; top: 15px; left: 15px; color: #fce2b2; font-size: 20px; cursor: pointer; z-index: 10; opacity: 0.8; 
+		}
+		.rp-top-bg { 
+			position: absolute; top: 0; left: -20%; width: 140%; height: 130px; background-color: #df4a3b; border-bottom-left-radius: 50%; border-bottom-right-radius: 50%; z-index: 1; 
+		}
+		.rp-avatar { 
+			width: 54px; height: 54px; border-radius: 4px; border: 2px solid #fff; background: #eee; position: relative; z-index: 2; margin-top: 100px; overflow:hidden; color:#333; display:flex; align-items:center; justify-content:center; 
+		}
+		.rp-sender-name { position: relative; z-index: 2; font-size: 16px; margin-top: 10px; font-weight: 500; }
+		.rp-desc { position: relative; z-index: 2; font-size: 20px; margin-top: 25px; width: 80%; text-align: center; }
+		.rp-open-btn { 
+			width: 90px; height: 90px; background-color: #ebd09b; border-radius: 50%; color: #333; font-size: 36px; font-weight: bold; display: flex; align-items: center; justify-content: center; position: absolute; bottom: 40px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 2; 
+		}
+		.rp-open-btn:active { transform: scale(0.95); background-color: #dfc38f; }
+
+		/* ============================================================ */
+		/* 微信风格：转账弹窗 UI */
+		/* ============================================================ */
+		.tf-modal-content { 
+			width: 280px; background-color: #fff; border-radius: 12px; padding: 30px 20px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+		}
+		.tf-icon { font-size: 56px; color: #07c160; margin-bottom: 15px; }
+		.tf-title { font-size: 16px; color: #333; margin-bottom: 5px; }
+		.tf-amount { font-size: 36px; font-weight: bold; color: #333; margin-bottom: 10px; }
+		.tf-desc { font-size: 14px; color: #999; margin-bottom: 30px; text-align: center; }
+		.tf-actions { display: flex; width: 100%; gap: 15px; }
+		.tf-actions button { flex: 1; height: 44px; border-radius: 6px; font-size: 16px; border: none; cursor: pointer; font-weight:500; }
+		.tf-btn-reject { background-color: #f5f5f5; color: #666; }
+		.tf-btn-accept { background-color: #07c160; color: #fff; }
+		
+		/* ============================================================ */
+		/* 【新增】红包拆开后的详情页 UI 和动画 */
+		/* ============================================================ */
+
+		/* 红包“開”字旋转动画 */
+		@keyframes spinOpen {
+			0% { transform: rotateY(0deg); }
+			100% { transform: rotateY(360deg); }
+		}
+		.spin-anim {
+			animation: spinOpen 0.6s linear infinite;
+			pointer-events: none; /* 旋转时禁止再次点击 */
+		}
+
+		/* 拆开后的详情卡片 */
+		.rp-opened-content {
+			width: 280px; 
+			height: 420px; 
+			background-color: #fff; 
+			border-radius: 12px;
+			position: relative; 
+			overflow: hidden; 
+			display: flex; 
+			flex-direction: column; 
+			box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+		}
+		.rp-opened-top {
+			background-color: #df4a3b;
+			height: 180px; 
+			border-bottom-left-radius: 30px;
+			border-bottom-right-radius: 30px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			color: #fce2b2;
+			position: relative;
+		}
+		.rp-opened-close {
+			position: absolute; top: 15px; left: 15px; font-size: 20px; color: #fce2b2; cursor: pointer; z-index: 10; padding: 5px;
+		}
+		.rp-opened-avatar {
+			width: 54px; height: 54px; border-radius: 4px; background: #fff; border: 2px solid #fff;
+			position: absolute; bottom: -27px; /* 压在线上 */
+			display: flex; align-items: center; justify-content: center; overflow: hidden;
+		}
+		.rp-opened-avatar img { width: 100%; height: 100%; object-fit: cover; }
+		.rp-opened-name { font-size: 16px; margin-top: 40px; font-weight: 500; }
+		.rp-opened-desc { font-size: 14px; margin-top: 10px; opacity: 0.8; width: 80%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+		.rp-opened-amount-box { margin-top: 60px; text-align: center; color: #d13d2e; display: flex; align-items: baseline; justify-content: center;}
+		.rp-opened-amount-box .num { font-size: 46px; font-weight: bold; line-height: 1;}
+		.rp-opened-amount-box .yuan { font-size: 14px; margin-left: 4px; font-weight: 500;}
+		.rp-opened-footer { text-align: center; font-size: 12px; color: #999; margin-top: auto; margin-bottom: 20px;}
+
+		/* 修正红包文字显示超出问题 */
+		.payment-amount-text {
+			font-size: 15px;
+			font-weight: 500;
+			margin-bottom: 2px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		
+		/* ============================================================ */
+		/* 【群聊专属样式】 */
+		/* ============================================================ */
+
+		/* 群聊消息发送者名字 (显示在气泡上方) */
+		.chat-msg-name {
+			font-size: 11px;
+			color: #999;
+			margin-bottom: 2px;
+			margin-left: 2px;
+			display: none; /* 默认隐藏，私聊不显示 */
+		}
+
+		/* 群聊模式下显示名字 */
+		.is-group-chat .chat-msg-name {
+			display: block;
+		}
+
+		/* 调整头像和内容的对齐，防止名字把气泡顶歪 */
+		.is-group-chat .msg-content-wrapper {
+			margin-top: -5px; /* 微调对齐 */
+		}
+
+		/* NPC 标签样式 (在成员列表中) */
+		.npc-tag {
+			font-size: 10px;
+			background-color: #eee;
+			color: #666;
+			padding: 1px 4px;
+			border-radius: 3px;
+			margin-left: 5px;
+		}
+		/* ============================================================ */
+		/* 【新增】聊天记录搜索页面样式 */
+		/* ============================================================ */
+
+		/* 搜索框容器 */
+		.search-bar-container {
+			display: flex;
+			align-items: center;
+			background: #fff;
+			padding: 10px 15px;
+			border-radius: 6px;
+			margin-bottom: 15px;
+			border: 1px solid #ddd;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+		}
+
+		.search-bar-container input {
+			flex: 1;
+			border: none;
+			outline: none;
+			background: transparent;
+			font-size: 15px;
+			color: #333;
+		}
+
+		/* 搜索结果列表项 */
+		.search-result-item {
+			display: flex;
+			padding: 15px 10px;
+			background: #fff;
+			border-bottom: 1px solid #f0f0f0;
+			cursor: pointer;
+			transition: background-color 0.2s;
+		}
+
+		.search-result-item:active {
+			background-color: #f5f5f5;
+		}
+
+		.search-result-avatar {
+			width: 40px;
+			height: 40px;
+			border-radius: 6px;
+			overflow: hidden;
+			margin-right: 12px;
+			flex-shrink: 0;
+			background: #eee;
+		}
+
+		.search-result-avatar img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+		.search-result-avatar i { 
+			width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #aaa; 
+		}
+
+		.search-result-content {
+			flex: 1;
+			overflow: hidden;
+		}
+
+		.search-result-header {
+			display: flex;
+			justify-content: space-between;
+			margin-bottom: 6px;
+			align-items: center;
+		}
+
+		.search-result-name {
+			font-size: 14px;
+			font-weight: 500;
+			color: #333;
+		}
+
+		.search-result-time {
+			font-size: 12px;
+			color: #999;
+		}
+
+		.search-result-text {
+			font-size: 14px;
+			color: #666;
+			display: -webkit-box;
+			-webkit-line-clamp: 2; /* 最多显示两行 */
+			-webkit-box-orient: vertical;
+			overflow: hidden;
+			line-height: 1.4;
+		}
+
+		/* 匹配的关键字高亮 */
+		.highlight-text {
+			color: #07c160;
+			font-weight: bold;
+		}
+
+		/* 跳转上下文后的气泡闪烁动画 */
+		@keyframes msgHighlightAnim {
+			0% { background-color: rgba(7, 193, 96, 0.4); transform: scale(1.02); }
+			50% { background-color: rgba(7, 193, 96, 0.2); transform: scale(1); }
+			100% { background-color: initial; }
+		}
+
+		.msg-highlight-anim .msg-bubble {
+			animation: msgHighlightAnim 1.5s ease-out forwards;
+		}
+
+		/* 暗黑模式适配 */
+		body[style*="background-color: #111"] .search-bar-container { background: #2c2c2c; border-color: #444; }
+		body[style*="background-color: #111"] .search-bar-container input { color: #fff; }
+		body[style*="background-color: #111"] .search-result-item { background: #111; border-color: #2a2a2a; }
+		body[style*="background-color: #111"] .search-result-name { color: #e0e0e0; }
+		body[style*="background-color: #111"] .search-result-text { color: #aaa; }
+		/* ============================================================ */
+		/* 【购物/外卖页面专属样式】 */
+		/* ============================================================ */
+		.shopping-tabs {
+			display: flex;
+			background: #fff;
+			border-bottom: 1px solid #eee;
+		}
+		.shop-tab {
+			flex: 1;
+			text-align: center;
+			padding: 12px 0;
+			font-size: 15px;
+			color: #666;
+			cursor: pointer;
+			position: relative;
+		}
+		.shop-tab.active {
+			color: #07c160;
+			font-weight: bold;
+		}
+		.shop-tab.active::after {
+			content: '';
+			position: absolute;
+			bottom: 0; left: 50%;
+			transform: translateX(-50%);
+			width: 40px; height: 3px;
+			background: #07c160;
+			border-radius: 3px 3px 0 0;
+		}
+
+		.shopping-control-panel {
+			background: #fff;
+			padding: 15px;
+			margin-bottom: 10px;
+		}
+		.shop-search-row input {
+			width: 100%;
+			height: 40px;
+			background: #f5f5f5;
+			border: none;
+			border-radius: 20px;
+			padding: 0 15px;
+			font-size: 14px;
+			outline: none;
+			margin-bottom: 15px;
+		}
+		.shop-filter-row {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 10px;
+		}
+		.shop-price-inputs {
+			display: flex;
+			align-items: center;
+			gap: 5px;
+			flex: 1;
+		}
+		.shop-price-inputs input {
+			width: 45%;
+			height: 32px;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			text-align: center;
+			font-size: 13px;
+			outline: none;
+		}
+		#shop-generate-btn {
+			background: #fa9d3b;
+			color: #fff;
+			border: none;
+			height: 32px;
+			padding: 0 15px;
+			border-radius: 16px;
+			font-size: 13px;
+			cursor: pointer;
+			white-space: nowrap;
+		}
+		#shop-generate-btn:active { background: #e08c35; }
+		#shop-generate-btn:disabled { background: #ccc; }
+
+		.shopping-result-container {
+			padding: 10px;
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+			padding-bottom: 80px; /* 防底部导航遮挡 */
+		}
+
+		.shop-empty-state {
+			text-align: center;
+			padding: 50px 0;
+			color: #bbb;
+		}
+		.shop-empty-state i { font-size: 40px; margin-bottom: 10px; }
+
+		.shop-card {
+			background: #fff;
+			border-radius: 8px;
+			overflow: hidden;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+			display: flex;
+			flex-direction: column;
+		}
+		.shop-card-img {
+			width: 100%;
+			height: 140px;
+			background: #f0f0f0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			color: #999;
+			font-size: 12px;
+			padding: 10px;
+			text-align: center;
+		}
+		.shop-card-body { padding: 12px; }
+		.shop-card-title {
+			font-size: 15px;
+			font-weight: bold;
+			color: #333;
+			margin-bottom: 4px;
+		}
+		.shop-card-desc {
+			font-size: 12px;
+			color: #888;
+			margin-bottom: 8px;
+			line-height: 1.4;
+			display: -webkit-box;
+			-webkit-line-clamp: 2;
+			-webkit-box-orient: vertical;
+			overflow: hidden;
+		}
+		.shop-card-price {
+			font-size: 18px;
+			color: #ff4d4f;
+			font-weight: bold;
+			margin-bottom: 10px;
+		}
+		.shop-card-price::before { content: '¥'; font-size: 12px; margin-right: 2px; }
+
+		.shop-card-comments {
+			background: #f9f9f9;
+			border-radius: 6px;
+			padding: 8px;
+			font-size: 12px;
+		}
+		.shop-comment-item {
+			margin-bottom: 4px;
+			line-height: 1.4;
+		}
+		.shop-comment-item:last-child { margin-bottom: 0; }
+		.shop-comment-user { color: #576b95; font-weight: bold; margin-right: 4px; }
+		/* ============================================================ */
+		/* 【外卖卡片系统及礼物清单样式】 */
+		/* ============================================================ */
+
+		/* 1. 外卖卡片容器 */
+		#delivery-cards-container {
+			position: fixed;
+			top: 60px; /* 位于聊天顶栏之下 */
+			left: 0;
+			width: 100%;
+			z-index: 990; /* 层级低于弹窗，高于聊天记录 */
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+			padding: 10px 15px;
+			pointer-events: none; /* 让点击穿透空白区域 */
+		}
+
+		/* 2. 单个外卖卡片 */
+		.delivery-card {
+			pointer-events: auto; /* 恢复卡片自身的点击 */
+			background: rgba(255, 255, 255, 0.95);
+			backdrop-filter: blur(10px);
+			border: 1px solid #07c160;
+			border-left: 4px solid #07c160;
+			border-radius: 8px;
+			padding: 10px 12px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.08);			
+		}
+		/* 超时状态 */
+		.delivery-card.overdue {
+			border-color: #fa9d3b;
+			border-left-color: #fa9d3b;
+		}
+		/* 送达状态 */
+		.delivery-card.arrived {
+			border-color: #ccc;
+			border-left-color: #999;
+			background: rgba(245, 245, 245, 0.95);
+		}
+
+		.delivery-info {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+		.delivery-title {
+			font-size: 14px;
+			font-weight: bold;
+			color: #333;
+		}
+		.delivery-status {
+			font-size: 12px;
+			color: #07c160;
+			font-family: monospace; /* 倒计时等宽 */
+		}
+		.delivery-card.overdue .delivery-status { color: #fa9d3b; }
+		.delivery-card.arrived .delivery-status { color: #999; }
+
+		/* 关闭(签收)按钮 */
+		.delivery-close-btn {
+			background: transparent;
+			border: none;
+			color: #999;
+			font-size: 20px;
+			cursor: pointer;
+			padding: 5px;
+			display: none; /* 默认隐藏 */
+		}
+		/* 只有送达后才显示关闭按钮 */
+		.delivery-card.arrived .delivery-close-btn {
+			display: block;
+		}
+		.delivery-close-btn:active { color: #333; }
+
+		@keyframes slideInDown {
+			from { transform: translateY(-20px); opacity: 0; }
+			to { transform: translateY(0); opacity: 1; }
+		}
+
+		/* 3. 礼物清单卡片样式 (复用一些现有样式) */
+		.gift-list-item {
+			background-color: #fff;
+			border: 1px solid #eee;
+			border-radius: 8px;
+			padding: 15px;
+			display: flex;
+			flex-direction: column;
+			position: relative;
+		}
+		.gift-list-header {
+			display: flex;
+			justify-content: space-between;
+			margin-bottom: 8px;
+			font-size: 12px;
+			color: #999;
+		}
+		.gift-list-name {
+			font-size: 16px;
+			font-weight: bold;
+			color: #333;
+			margin-bottom: 6px;
+		}
+		.gift-list-desc {
+			font-size: 13px;
+			color: #666;
+			line-height: 1.4;
+		}
+		.gift-delete-btn {
+			position: absolute;
+			top: 15px; right: 15px;
+			color: #ff3b30;
+			background: none; border: none;
+			font-size: 16px; cursor: pointer;
+		}
+
+		/* 4. 购物卡片上的购买按钮 */
+		.shop-buy-btn {
+			margin-top: 10px;
+			width: 100%;
+			height: 32px;
+			background-color: #fa9d3b;
+			color: #fff;
+			border: none;
+			border-radius: 4px;
+			font-size: 13px;
+			cursor: pointer;
+		}
+		.shop-buy-btn:active { background-color: #e08c35; }
+		.msg-bubble.is-order-card {
+			background-color: transparent !important;
+			border: 1px solid #e0e0e0 !important;
+			padding: 0 !important;
+			width: 240px;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+		}
+		
+		/* 修复礼物清单页面顶部被遮挡 */
+		#gift-list-page .page-content {
+			padding-top: 60px !important;
+			padding-bottom: 20px;
+		}
+		
+		/* ============================================================ */
+		/* 【新增】论坛专属样式 */
+		/* ============================================================ */
+
+		/* 1. 顶部 Tab 栏 (固定在内容区上方) */
+		.forum-tabs-wrapper {
+			position: absolute;
+			top: 0; left: 0; right: 0;
+			height: 44px;
+			background-color: #fff;
+			border-bottom: 1px solid #eee;
+			display: flex;
+			align-items: center;
+			z-index: 10;
+		}
+
+		.forum-tabs-scroll {
+			flex: 1;
+			display: flex;
+			overflow-x: auto;
+			height: 100%;
+			scrollbar-width: none; /* Firefox */
+		}
+		.forum-tabs-scroll::-webkit-scrollbar { display: none; }
+
+		.forum-tab {
+			padding: 0 15px;
+			height: 100%;
+			display: flex;
+			align-items: center;
+			font-size: 14px;
+			color: #666;
+			white-space: nowrap;
+			cursor: pointer;
+			position: relative;
+		}
+		.forum-tab.active {
+			color: #07c160;
+			font-weight: bold;
+		}
+		.forum-tab.active::after {
+			content: '';
+			position: absolute; bottom: 0; left: 20%; width: 60%;
+			height: 3px; background-color: #07c160; border-radius: 3px 3px 0 0;
+		}
+
+		.forum-tabs-actions {
+			display: flex;
+			align-items: center;
+			padding: 0 10px;
+			background: #fff;
+			box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+		}
+		.forum-tabs-actions button {
+			width: 30px; height: 30px;
+			border: none; background: transparent;
+			color: #666; font-size: 16px;
+			cursor: pointer; display: flex; align-items: center; justify-content: center;
+		}
+		.forum-tabs-actions button:active { color: #07c160; }
+
+		/* 2. 帖子列表卡片 */
+		.forum-post-card {
+			background: #fff;
+			border-radius: 8px;
+			padding: 15px;
+			margin-bottom: 12px;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+			position: relative;
+			cursor: pointer;
+		}
+		.forum-post-card:active { background-color: #f9f9f9; }
+
+		.fpc-title {
+			font-size: 16px; font-weight: bold; color: #333;
+			margin-bottom: 8px; line-height: 1.4;
+			display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+		}
+		.fpc-content-preview {
+			font-size: 14px; color: #666; margin-bottom: 10px;
+			display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+		}
+		.fpc-footer {
+			display: flex; justify-content: space-between; align-items: center;
+		}
+		.fpc-author {
+			display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888;
+		}
+		.fpc-author img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+		.fpc-time { font-size: 12px; color: #aaa; }
+
+		.fpc-delete-btn {
+			position: absolute; top: 10px; right: 10px;
+			color: #ccc; background: none; border: none; font-size: 14px; padding: 5px; cursor: pointer;
+		}
+		.fpc-delete-btn:active { color: #ff3b30; }
+
+		/* 3. 帖子详情页 */
+		.forum-detail-main {
+			background: #fff; padding: 20px 15px; margin: -10px -10px 10px -10px;
+			border-bottom: 1px solid #eee;
+		}
+		.fd-title { font-size: 20px; font-weight: bold; color: #333; margin-bottom: 15px; line-height: 1.4; }
+		.fd-author-box { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+		.fd-author-box img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+		.fd-author-info { display: flex; flex-direction: column; }
+		.fd-author-name { font-size: 14px; font-weight: 500; color: #333; }
+		.fd-author-time { font-size: 12px; color: #999; }
+		.fd-content { font-size: 16px; color: #444; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
+
+		/* 评论区 */
+		.forum-reply-header { font-size: 14px; font-weight: bold; color: #666; margin: 15px 5px; border-left: 3px solid #07c160; padding-left: 8px; }
+		.forum-reply-item {
+			background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 10px;
+			display: flex; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+		}
+		.fri-avatar { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #eee; }
+		.fri-avatar img { width: 100%; height: 100%; object-fit: cover; }
+		.fri-main { flex: 1; }
+		.fri-name { font-size: 13px; font-weight: 500; color: #576b95; margin-bottom: 4px; }
+		.fri-content { font-size: 15px; color: #333; line-height: 1.5; white-space: pre-wrap; }
+		.fri-time { font-size: 11px; color: #aaa; margin-top: 6px; }
+
+		/* 暗黑模式兼容 */
+		body[style*="background-color: #111"] .forum-tabs-wrapper { background-color: #191919; border-color: #2a2a2a; }
+		body[style*="background-color: #111"] .forum-tabs-actions { background-color: #191919; }
+		body[style*="background-color: #111"] .forum-post-card,
+		body[style*="background-color: #111"] .forum-detail-main,
+		body[style*="background-color: #111"] .forum-reply-item { background-color: #1a1a1a; border-color: #2a2a2a; }
+		body[style*="background-color: #111"] .fpc-title, body[style*="background-color: #111"] .fd-title { color: #e0e0e0; }
+		body[style*="background-color: #111"] .fd-content, body[style*="background-color: #111"] .fri-content { color: #ccc; }
+		/* ============================================================ */
+		/* 【新增】论坛用户发帖与回复扩展样式 */
+		/* ============================================================ */
+
+		/* 论坛版块操作栏 (面具 + 发帖) */
+		.forum-board-action-bar {
+			display: flex;
+			gap: 10px;
+			padding: 10px 15px;
+			background: #fff;
+			border-bottom: 1px solid #f0f0f0;
+		}
+		.forum-board-action-bar button {
+			flex: 1;
+			height: 36px;
+			border-radius: 18px;
+			border: none;
+			font-size: 14px;
+			font-weight: 500;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 5px;
+		}
+		.btn-mask {
+			background-color: #f0f0f0;
+			color: #555;
+		}
+		.btn-mask:active { background-color: #e5e5e5; }
+		.btn-post {
+			background-color: #e8f4fd;
+			color: #576b95;
+		}
+		.btn-post:active { background-color: #d1e9fa; }
+
+		/* 评论卡片内部操作区 (回复 & 删除) */
+		.fri-actions {
+			display: flex;
+			justify-content: flex-end;
+			gap: 15px;
+			margin-top: 8px;
+		}
+		.fri-action-btn {
+			background: none;
+			border: none;
+			font-size: 12px;
+			color: #999;
+			cursor: pointer;
+		}
+		.fri-action-btn:hover { color: #576b95; }
+		.fri-action-btn.delete:hover { color: #ff3b30; }
+
+		/* 暗黑模式兼容 */
+		body[style*="background-color: #111"] .forum-board-action-bar { background: #191919; border-color: #2a2a2a; }
+		body[style*="background-color: #111"] .btn-mask { background: #333; color: #ccc; }
+		body[style*="background-color: #111"] .btn-post { background: #223040; color: #8299c2; }
+		/* 论坛 @ 角色列表样式 */
+		.forum-at-item {
+			display: flex;
+			align-items: center;
+			padding: 10px;
+			border-bottom: 1px solid #f5f5f5;
+			cursor: pointer;
+			transition: background-color 0.2s;
+		}
+		.forum-at-item:active {
+			background-color: #f0f0f0;
+		}
+		.forum-at-avatar {
+			width: 36px;
+			height: 36px;
+			border-radius: 4px;
+			margin-right: 12px;
+			object-fit: cover;
+			background-color: #eee;
+		}
+		.forum-at-name {
+			font-size: 15px;
+			color: #333;
+			font-weight: 500;
+		}
+		
+		/* ============================================================ */
+		/* 【补充】论坛输入底栏专属样式 (分离后的独立样式) */
+		/* ============================================================ */
+		.forum-input-bar {
+			position: fixed;
+			bottom: 0; 
+			left: 0; 
+			right: 0;
+			height: 52px; 
+			background-color: #f7f7f7;
+			border-top: 1px solid #dcdcdc;
+			display: flex;
+			align-items: center; 
+			padding: 8px 10px;
+			z-index: 1001;
+			gap: 10px;
+			/* 适配底部安全区(如 iPhone 的底部黑条) */
+			padding-bottom: calc(8px + env(safe-area-inset-bottom));
+		}
+
+		.forum-bar-group { 
+			display: flex; 
+			align-items: center; 
+			flex-shrink: 0; 
+		}
+
+		.forum-bar-center { 
+			flex-grow: 1; 
+		}
+
+		.forum-bar-btn {
+			border: none; 
+			background: transparent;
+			display: flex; 
+			align-items: center; 
+			justify-content: center;
+			cursor: pointer;
+		}
+
+		.forum-bar-input {
+			width: 100%;
+			border: 1px solid #ddd; 
+			background-color: #fff;
+			outline: none;
+			box-sizing: border-box;
+			font-size: 15px;
+		}
+
+		.forum-bar-input:focus { 
+			border-color: #07c160; 
+		}
+
+		.forum-send-btn:active { 
+			opacity: 0.8; 
+		}
+
+		/* 适配原生暗黑模式 (如果在未加载自定义样式前) */
+		body[style*="background-color: #111"] .forum-input-bar {
+			background-color: #191919 !important;
+			border-top: 1px solid #2a2a2a !important;
+		}
+		body[style*="background-color: #111"] .forum-bar-input {
+			background-color: #2c2c2c !important;
+			border-color: #444 !important;
+			color: #e0e0e0 !important;
+		}
+		/* 修复论坛发送按钮太扁的问题，并美化文字排版 */
+		.forum-send-btn {
+			height: 36px !important;       /* 强制高度为36px，和左边的输入框完美平齐 */
+			width: 65px !important;        /* 稍微加宽一点点（覆盖你HTML里的60px） */
+			font-weight: 500;              /* 文字稍微加粗，更有质感 */
+			letter-spacing: 2px;           /* 增加字间距，让“发送”两个字不要挤在一起 */
+			text-indent: 2px;              /* 配合字间距，让文字在视觉上绝对居中 */
+			box-shadow: 0 2px 6px rgba(7, 193, 96, 0.2); /* 顺手加个极其轻微的绿色阴影，更有按压感 */
+		}
+		
+		/* ============================================================ */
+		/* 【新增】手账日记专属样式 (高度还原图样) */
+		/* ============================================================ */
+
+		/* 日记外层画板 (背景为纸张白) */
+		.diary-wrapper {
+			background-color: #ffffff;
+			border-radius: 8px;
+			padding: 20px;
+			box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+			position: relative;
+			overflow: hidden;
+			color: #2b2b2b;
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+		}
+
+		/* 顶部信息区 */
+		.diary-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: flex-end;
+			margin-bottom: 10px;
+		}
+		.diary-top-avatar {
+			width: 44px;
+			height: 44px;
+			border-radius: 50%;
+			background-color: #f2f2f6;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			overflow: hidden;
+			border: 1px solid #dbe2ec;
+			flex-shrink: 0;
+		}
+		.diary-top-avatar img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+		.diary-top-avatar i {
+			font-size: 24px;
+			color: #ccc;
+		}
+
+		.diary-date-area {
+			display: flex;
+			align-items: flex-end;
+			gap: 8px;
+			color: #2a3c5a;
+		}
+
+		.diary-day {
+			font-size: 42px;
+			font-weight: 300;
+			line-height: 0.8;
+		}
+
+		.diary-date-info {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-end;
+			font-size: 12px;
+			font-weight: bold;
+		}
+
+		/* 蓝色圆点分割线 (已修复 html2canvas 不显示的问题) */
+		.diary-dots-line {
+			height: 6px;
+			/* 弃用 html2canvas 无法解析的 radial-gradient，改为原生的 SVG 背景 */
+			background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='6'%3E%3Ccircle cx='3' cy='3' r='2' fill='%234a5c7b'/%3E%3C/svg%3E");
+			background-size: 12px 6px;
+			background-repeat: repeat-x;
+			margin-bottom: 15px;
+			opacity: 0.7;
+		}
+
+		/* 主体布局 */
+		.diary-body {
+			display: flex;
+			gap: 15px;
+		}
+
+		/* 左侧栏：小方块集合 */
+		.diary-left-col {
+			flex: 0 0 45%; /* 左侧占45% */
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+
+		.diary-box {
+			background-color: #f8f9fc;
+			border: 1px solid #dbe2ec;
+			border-radius: 6px;
+			padding: 8px;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.diary-box-title {
+			font-size: 11px;
+			font-weight: bold;
+			color: #1a1a1a;
+			margin-bottom: 6px;
+			display: flex;
+			align-items: center;
+			gap: 4px;
+		}
+
+		.diary-box-content {
+			font-size: 11px;
+			color: #555;
+			line-height: 1.5;
+			white-space: pre-wrap;
+			word-wrap: break-word;
+			flex-grow: 1;
+		}
+
+		/* 右侧栏：时间线正文 */
+		.diary-right-col {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			gap: 15px;
+		}
+
+		.timeline-block {
+			display: flex;
+			flex-direction: column;
+		}
+
+		/* --- 替换这一段：右列时间分隔栏 (拉长为一整行) --- */
+		.timeline-time {
+			font-size: 14px;
+			font-weight: bold;
+			color: #1a1a1a;
+			background-color: #f1f4f9;
+			padding: 2px 10px;
+			border-radius: 12px;
+			/* 【关键修改】让它占满宽度，而不是收缩 */
+			width: 100%; 
+			box-sizing: border-box;
+			margin-bottom: 8px;
+		}
+
+		.timeline-content {
+			font-size: 13px;
+			color: #444;
+			line-height: 1.8;
+			padding-left: 5px;
+			white-space: pre-wrap;
+			word-wrap: break-word;
+		}
+
+		/* 底部品牌标记 */
+		.diary-footer-brand {
+			text-align: right;
+			font-size: 9px;
+			color: #aaa;
+			font-weight: bold;
+			margin-top: 20px;
+			border-top: 1px solid #eee;
+			padding-top: 8px;
+		}
+
+		/* 日记列表卡片样式 */
+		.diary-char-card {
+			display: flex;
+			align-items: center;
+			background: #fff;
+			padding: 15px;
+			border-radius: 8px;
+			margin-bottom: 12px;
+			box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+			cursor: pointer;
+		}
+		.diary-char-card:active { background: #f9f9f9; }
+		.d-char-avatar { width: 44px; height: 44px; border-radius: 8px; overflow: hidden; margin-right: 15px; background: #eee; }
+		.d-char-avatar img { width: 100%; height: 100%; object-fit: cover; }
+		.d-char-info { flex: 1; }
+		.d-char-name { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px; }
+		.d-char-desc { font-size: 12px; color: #999; }
+		/* ============================================================ */
+		/* 【心动遇见 (婚介APP伪装) 专属样式】 */
+		/* ============================================================ */
+
+		/* 页面通用背景 */
+		.meet-page-bg {
+			background-color: #fff4f6;
+			padding: 20px;
+			display: flex;
+			flex-direction: column;
+			min-height: 100%;
+			box-sizing: border-box;
+		}
+
+		/* 头部设计 */
+		.meet-header {
+			text-align: center;
+			padding: 10px 0 20px 0;
+		}
+		.meet-header-icon {
+			color: #ff4d4f;
+			font-size: 40px;
+			text-shadow: 0 4px 10px rgba(255, 77, 79, 0.3);
+		}
+		.meet-header-title {
+			margin-top: 10px;
+			color: #ff4d4f;
+			font-size: 20px;
+			font-weight: bold;
+		}
+		.meet-header-subtitle {
+			color: #888;
+			font-size: 12px;
+			margin-top: 5px;
+		}
+
+		/* 表单卡片项 */
+		.meet-form-card {
+			background: #fff;
+			border: 1px solid #ffe5e5;
+			border-radius: 12px;
+			padding: 15px;
+			margin-bottom: 15px;
+		}
+		.meet-form-label {
+			color: #333;
+			font-weight: bold;
+			display: block;
+			margin-bottom: 10px;
+		}
+		.meet-input {
+			background-color: #fdfdfd !important;
+		}
+
+		/* 渐变主按钮 (生成/寻觅) */
+		.meet-btn-primary {
+			width: 100%;
+			background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+			color: #fff;
+			font-weight: bold;
+			height: 50px;
+			border-radius: 25px;
+			margin-top: 10px;
+			border: none;
+			box-shadow: 0 4px 15px rgba(255, 117, 140, 0.4);
+			font-size: 16px;
+			cursor: pointer;
+		}
+		.meet-btn-primary:active {
+			transform: scale(0.98);
+		}
+
+		/* 匹配结果展示卡片 */
+		.meet-result-card {
+			background: #fff;
+			border-radius: 16px;
+			padding: 20px;
+			box-shadow: 0 4px 20px rgba(255, 77, 79, 0.15);
+			margin-top: 40px; /* 留出头像溢出的空间 */
+			text-align: center;
+			position: relative;
+		}
+		.meet-result-avatar {
+			width: 80px;
+			height: 80px;
+			background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+			border-radius: 50%;
+			margin: -60px auto 10px auto;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			color: #fff;
+			font-size: 35px;
+			border: 4px solid #fff;
+			box-shadow: 0 4px 10px rgba(255, 154, 158, 0.4);
+		}
+		.meet-result-name {
+			color: #333;
+			font-size: 22px;
+			margin-bottom: 5px;
+			font-weight: bold;
+		}
+		.meet-result-tag {
+			font-size: 12px;
+			color: #ff4d4f;
+			margin-bottom: 20px;
+			font-weight: bold;
+		}
+		.meet-result-brief {
+			text-align: left;
+			background: #fdfdfd;
+			border: 1px dashed #ffccc7;
+			border-radius: 8px;
+			padding: 15px;
+			font-size: 14px;
+			color: #555;
+			line-height: 1.6;
+		}
+
+		/* 结果页按钮组 */
+		.meet-result-actions {
+			margin-top: 30px;
+			display: flex;
+			flex-direction: column;
+			gap: 15px;
+		}
+		/* 接受按钮 (绿色) */
+		.meet-btn-accept {
+			width: 100%;
+			background: linear-gradient(135deg, #07c160 0%, #0abf5b 100%);
+			color: #fff;
+			font-weight: bold;
+			height: 50px;
+			border-radius: 25px;
+			border: none;
+			box-shadow: 0 4px 15px rgba(7, 193, 96, 0.3);
+			font-size: 16px;
+			cursor: pointer;
+		}
+		.meet-btn-accept:active {
+			transform: scale(0.98);
+		}
+		/* 重新生成按钮 (线框) */
+		.meet-btn-outline {
+			width: 100%;
+			background-color: #fff;
+			color: #ff4d4f;
+			border: 1px solid #ff4d4f;
+			font-weight: bold;
+			height: 50px;
+			border-radius: 25px;
+			font-size: 16px;
+			cursor: pointer;
+		}
+		.meet-btn-outline:active {
+			background-color: #fff4f6;
+		}
+		/* ============================================================ */
+		/* 主动消息设置 - 独立角色卡片样式 */
+		/* ============================================================ */
+		.active-msg-char-card {
+			border: 1px solid #eee;
+			background: #fff;
+			border-radius: 8px;
+			margin-bottom: 10px;
+			padding: 10px;
+			transition: all 0.3s ease;
+		}
+
+		/* 开启状态下的卡片样式 */
+		.active-msg-char-card.enabled {
+			border-color: #c3e8ca;
+			background: #f6ffed;
+		}
+
+		.am-card-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 0;
+			transition: margin-bottom 0.3s ease;
+		}
+
+		/* 开启状态下给标题下方留出间距，展示配置项 */
+		.active-msg-char-card.enabled .am-card-header {
+			margin-bottom: 10px;
+		}
+
+		.am-card-header-left {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.am-card-header-left span {
+			font-weight: bold;
+			color: #333;
+		}
+
+		.am-card-switch {
+			transform: scale(0.8);
+			margin: 0;
+			transform-origin: right center;
+		}
+
+		.am-card-configs {
+			display: none; /* 默认隐藏 */
+			gap: 10px;
+			background: #fff;
+			padding: 10px;
+			border-radius: 6px;
+			border: 1px solid #eee;
+		}
+
+		/* 开启状态下显示配置项 */
+		.active-msg-char-card.enabled .am-card-configs {
+			display: flex;
+		}
+
+		.am-config-item {
+			flex: 1;
+		}
+
+		.am-config-label {
+			font-size: 11px;
+			color: #888;
+			display: block;
+			margin-bottom: 4px;
+		}
+
+		.am-config-input {
+			font-size: 13px;
+			padding: 6px;
+			background: #fdfdfd;
+		}
